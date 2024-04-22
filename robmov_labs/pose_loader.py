@@ -31,13 +31,15 @@ class PoseLoader(Node):
         with open(f'src/robmov_labs/text/{name}.txt', 'r') as file:
             for line in file:
                 x, y, theta = line.strip().replace("pi", str(np.pi)).split(',')
+                q = quaternion_from_euler(0, 0, eval(theta))
                 poses.append(Pose(
                     position = Point(x=float(x), y=float(y), z=float(0)),
-                    orientation = Quaternion(*quaternion_from_euler(0, 0, theta))
+                    orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
                     )
                 )
         return poses
-    
+
+
 def main(args=None):
     rclpy.init(args=args)
     node = PoseLoader()

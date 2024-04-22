@@ -35,7 +35,7 @@ class ObstacleDetector(Node):
         
     def mostrar(self):
         while True:
-            if self.data_cv:
+            if type(self.data_cv) == np.:
                 cv2.imshow('frame1', self.data_cv) 
                 
                 if cv2.waitKey(1) & 0xFF == 27: 
@@ -45,8 +45,8 @@ class ObstacleDetector(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = ObstacleDetector()
-    thread_screen = Thread(target=node.mostrar)
-    thread_screen.start()
+    # thread_screen = Thread(target=node.mostrar)
+    # thread_screen.start()
     rclpy.spin(node)
     rclpy.shutdown()
 
