@@ -37,7 +37,7 @@ class DeadReckoningNav( Node ):
 
     def aplicar_velocidad( self, speed_command_list ):
         for command in speed_command_list:
-            print()
+            # print()
             
             self.speed.linear.x = command[0]
             self.speed.angular.z = command[1]

@@ -43,13 +43,12 @@ class OdometryReader( Node ):
                 if self.contador == 20:
                     self.plot_road()
                     self.contador = 0
-                    print( self.road )
                 
                 else:
                     self.road.append((x, y))
                     self.contador += 1
                 
-            print(self.contador, pos, self.prev, self.flag1, self.flag2) 
+            # print(self.contador, pos, self.prev, self.flag1, self.flag2) 
     
     def plot_road(self):
         x = [pos[0] for pos in self.road]
@@ -63,9 +62,10 @@ class OdometryReader( Node ):
         # plt.savefig('imgs/not_corrected_odom.png')
         self.flag3 = True
 
+def main():
+    rclpy.init()
+    odom_reader = OdometryReader()
+    rclpy.spin( odom_reader )
 
 if __name__ == '__main__':
-
-  rclpy.init()
-  odom_reader = OdometryReader()
-  rclpy.spin( odom_reader )
+    main()
