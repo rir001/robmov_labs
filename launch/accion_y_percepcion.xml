@@ -1,0 +1,9 @@
+<launch>
+
+  <include file="$(find-pkg-share very_simple_robot_simulator)/launch/run_all.xml" />
+
+  <include file="$(find-pkg-share robmov_labs)/obstacle_detector.xml" />
+  <include file="$(find-pkg-share robmov_labs)/dead_reckoning.xml" />
+  <include file="$(find-pkg-share robmov_labs)/pose_loader.xml" />
+  
+</launch>
