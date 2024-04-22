@@ -32,7 +32,7 @@ class PoseLoader(Node):
             for line in file:
                 x, y, theta = line.strip().replace("pi", str(np.pi)).split(',')
                 poses.append(Pose(
-                    position = Point(x=float(x), y=float(y), z=0),
+                    position = Point(x=float(x), y=float(y), z=float(0)),
                     orientation = Quaternion(*quaternion_from_euler(0, 0, theta))
                     )
                 )

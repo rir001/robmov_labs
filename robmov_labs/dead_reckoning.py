@@ -9,6 +9,10 @@ from geometry_msgs.msg import Twist, PoseArray, Pose, Point, Quaternion, Vector3
 from threading import Thread
 
 
+OMEGA = 1.0          # rad/s
+T_AJUSTE = 1.1085    # factor de ajuste para el tiempo de duracion de los movimientos
+VEL = 0.2            # m/s
+
 class DeadReckoningNav( Node ):
     def __init__( self ):
         super().__init__( 'dead_reckoning_nav' )
@@ -17,9 +21,6 @@ class DeadReckoningNav( Node ):
         self.cmd_vel_mux_pub = self.create_publisher(Twist, '/cmd_vel_mux/input/navigation', 10)
         self.speed = Twist()
         self.timer_period = 0.2 # seconds
-        self.vel = 0.2          # m/s
-        self.omega = 1.0        # rad/s
-        self.t_ajuste = 1.1085     # factor de ajuste para el tiempo de duracion de los movimientos
         self.pause_robot = False
         
         # Tests
@@ -66,30 +67,28 @@ class DeadReckoningNav( Node ):
             
 
     def mover_robot_a_destino(self, goal_pose ):
-        x = goal_pose[0]
-        y = goal_pose[1]
-        theta = goal_pose[2]
+        x, y, theta = goal_pose
         speed_command_list = []
         
         theta_actual = 0
         
         if x != 0:
             if x < 0:
-                speed_command_list.append(self.gira( np.pi ))
+                speed_command_list.append(self.gira(np.pi))
                 theta_actual += np.pi
                 y = -y
         
-            speed_command_list.append(self.avanza( np.abs(x) ))
+            speed_command_list.append(self.avanza(np.abs(x)))
         
         if y != 0:
             if y < 0:
-                speed_command_list.append(self.gira( 3*np.pi/2 ))
+                speed_command_list.append(self.gira(3*np.pi/2))
                 theta_actual += 3*np.pi/2
             else:
-                speed_command_list.append(self.gira( np.pi/2 ))
+                speed_command_list.append(self.gira(np.pi/2))
                 theta_actual += np.pi/2
 
-            speed_command_list.append(self.avanza( np.abs(y) ))
+            speed_command_list.append(self.avanza(np.abs(y)))
         
         
         if round(theta_actual,2) != round(theta,2):
@@ -97,7 +96,7 @@ class DeadReckoningNav( Node ):
                 speed_command_list.append(self.gira( theta - theta_actual ))
             else:
                 speed_command_list.append(self.gira( 2*np.pi - theta_actual + theta ))
-          
+
         self.aplicar_velocidad(speed_command_list)
     
     
@@ -126,30 +125,32 @@ class DeadReckoningNav( Node ):
             if int(lcr[2]):
                 self.get_logger().info("obstacle right")
 
-    
-    ############################
-    ### Funciones Auxiliares ###
-    ############################
-    
-    def gira(self, angulo: float):
-        '''
-        En base a un angulo (en radianes), se retorna el comando de giro necesario para que el robot gire ese angulo.
-        Retorna una lista con la velocidad lineal, velocidad angular y tiempo de duracion del movimiento [v, w, t].
-        '''
-        tiempo = float(angulo/self.omega)*self.t_ajuste
-        return [0.0, self.omega, tiempo]
         
-    def avanza(self, distancia: float):
-        '''
-        En base a una distancia, se retorna el comando de avance necesario para que el robot avance esa distancia.
-        Retorna una lista con la velocidad lineal, velocidad angular y tiempo de duracion del movimiento [v, w, t].
-        '''
-        tiempo = float(distancia/self.vel)
-        return [self.vel, 0.0, tiempo]
-    
     def thread_function(self, goal_list):
         thread = Thread(target=self.accion_mover_cb, args=(goal_list,))
         thread.start()
+
+
+############################
+### Funciones Auxiliares ###
+############################
+
+def gira(self, angulo: float):
+    '''
+    En base a un angulo (en radianes), se retorna el comando de giro necesario para que el robot gire ese angulo.
+    Retorna una lista con la velocidad lineal, velocidad angular y tiempo de duracion del movimiento [v, w, t].
+    '''
+    tiempo = float(angulo/OMEGA)*T_AJUSTE
+    return [0.0, OMEGA, tiempo]
+    
+def avanza(self, distancia: float):
+    '''
+    En base a una distancia, se retorna el comando de avance necesario para que el robot avance esa distancia.
+    Retorna una lista con la velocidad lineal, velocidad angular y tiempo de duracion del movimiento [v, w, t].
+    '''
+    tiempo = float(distancia/VEL)
+    return [VEL, 0.0, tiempo]
+
 
 
 def main():
