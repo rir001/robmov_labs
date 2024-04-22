@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import numpy as np
+np.float = float
 
 import rclpy
 from rclpy.node import Node
@@ -24,11 +26,12 @@ class RealPoseReader( Node ):
             x = pos.position.x
             y = pos.position.y
             z = pos.position.z
-            roll, pitch, yaw = euler_from_quaternion( ( pos.orientation.x,
-                                                        pos.orientation.y,
-                                                        pos.orientation.z,
-                                                        pos.orientation.w ) )
-            pos = (round(x,4), round(y,4), round(yaw,4))
+            w = pos.position.w
+
+            roll, pitch, yaw = euler_from_quaternion((x, y, z, w))
+
+            pos = (round(x, 4), round(y, 4), round(yaw, 4))
+
             if pos != self.prev:
                 self.contador = 0
                 if self.flag1:

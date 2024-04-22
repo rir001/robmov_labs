@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-
 import numpy as np
+np.float = float
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
@@ -22,23 +23,20 @@ class ObstacleDetector(Node):
     def depth_cb( self, data ):
         self.data_cv = self.bridge.imgmsg_to_cv2( data )
         
-        l = self.data_cv[::, :213].min()
-        c = self.data_cv[::, 213:426].min()
-        r = self.data_cv[::, 426:].min()
-        
-        self.vector.x = float(int(l < 0.7 or np.isnan(l))) 
-        self.vector.y = float(int(c < 0.7 or np.isnan(c)))
-        self.vector.z = float(int(r < 0.7 or np.isnan(r)))
+        self.vector.x = float(int(self.data_cv[::,    :213].min() < 0.7 or np.isnan(l))) 
+        self.vector.y = float(int(self.data_cv[::, 213:426].min() < 0.7 or np.isnan(c)))
+        self.vector.z = float(int(self.data_cv[::, 426:   ].min() < 0.7 or np.isnan(r)))
         
         self.publisher.publish(self.vector)
         
     def mostrar(self):
         while True:
-            if self.data_cv is not None:
+            if self.data_cv:
                 cv2.imshow('frame1', self.data_cv) 
                 
                 if cv2.waitKey(1) & 0xFF == 27: 
                     break
+
 
 def main(args=None):
     rclpy.init(args=args)
