@@ -49,16 +49,22 @@ class DeadReckoningNav( Node ):
             t_inicial = self.get_clock().now().nanoseconds
             t_actual = self.get_clock().now().nanoseconds
             contador = 0
+
             
-            while t_actual - t_inicial < t_ejecucion:
+            delta = 0
+
+            while t_actual - t_inicial - delta < t_ejecucion:
                 
+                pause = 1
                 while self.pause_robot:
-                    t_transcurrido = t_actual - t_inicial
-                    t_faltante = t_ejecucion - t_transcurrido
-                    t_inicial = t_transcurrido + t_inicial
-                    t_ejecucion = t_faltante
-                
-                if (t_actual - t_inicial ) > self.timer_period*contador*10**9:
+                    if pause:
+                        self.get_logger().info("Robot paused")
+                        p_start = self.get_clock().now().nanoseconds
+                    pause = 0
+                delta += self.get_clock().now().nanoseconds - p_start
+
+
+                if (t_actual - t_inicial - delta) > self.timer_period*contador*10**9:
                     contador += 1
                     self.cmd_vel_mux_pub.publish(self.speed)
                     self.get_logger().info(f'Moving: v={self.speed.linear.x}, w={self.speed.angular.z},     {contador}')
