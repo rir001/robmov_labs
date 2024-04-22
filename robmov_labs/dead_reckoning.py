@@ -6,7 +6,6 @@ import rclpy
 from tf_transformations import euler_from_quaternion, quaternion_from_euler
 from rclpy.node import Node
 from geometry_msgs.msg import Twist, PoseArray, Pose, Point, Quaternion
-from threading import Thread
 
 
 class DeadReckoningNav( Node ):

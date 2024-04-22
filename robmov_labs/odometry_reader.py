@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-import numpy as np
-np.float = float
 
 import rclpy
 from rclpy.node import Node
@@ -61,16 +59,13 @@ class OdometryReader( Node ):
         ax.set_ylim(-2, 4)
         ax.plot(x, y)
         plt.show()
-        plt.savefig('imgs/odom.png')
+        # plt.savefig('imgs/corrected_odom.png')
+        # plt.savefig('imgs/not_corrected_odom.png')
         self.flag3 = True
-
-
-def main():
-    rclpy.init()
-    odom_reader = OdometryReader()
-    rclpy.spin( odom_reader )
 
 
 if __name__ == '__main__':
 
-    main()
+  rclpy.init()
+  odom_reader = OdometryReader()
+  rclpy.spin( odom_reader )

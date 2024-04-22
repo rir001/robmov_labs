@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import numpy as np
-np.float = float
+np.foat = float
 
 import rclpy
 from rclpy.node import Node
@@ -26,9 +26,8 @@ class PoseLoader(Node):
     
     def read_file(self):
         poses = []
-        import os
-        print(os.getcwd())
-        with open( 'src/robmov_labs/text/' + input("Ingrese el nombre del archivo de texto: ") + '.txt', 'r') as file:
+        # with open( 'txts/' + input("Ingrese el nombre del archivo de texto: ") + '.txt', 'r') as file:
+        with open( 'src/robmov_labs/text/cuadrado.txt', 'r') as file:
             for line in file:
                 x, y, theta = line.split(',')
                 

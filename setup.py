@@ -24,6 +24,7 @@ setup(
             'pose_loader = robmov_labs.pose_loader:main',
             'real_pose_reader = robmov_labs.real_pose_reader:main',
             'dead_reckoning = robmov_labs.dead_reckoning:main',
+            'obstacle_detector = robmov_labs.obstacle_detector:main',
         ],
     },
 )
