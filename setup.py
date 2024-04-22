@@ -20,6 +20,10 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'odometry_reader = robmov_labs.odometry_reader:main',
+            'pose_loader = robmov_labs.pose_loader:main',
+            'real_pose_reader = robmov_labs.real_pose_reader:main',
+            'dead_reckoning = robmov_labs.dead_reckoning:main',
         ],
     },
 )
