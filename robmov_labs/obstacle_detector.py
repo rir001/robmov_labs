@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import numpy as np
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
@@ -21,13 +22,13 @@ class ObstacleDetector(Node):
     def depth_cb( self, data ):
         self.data_cv = self.bridge.imgmsg_to_cv2( data )
         
-        l = self.data_cv[::, :213]
-        c = self.data_cv[::, 213:426]
-        r = self.data_cv[::, 426:]
+        l = self.data_cv[::, :213].min()
+        c = self.data_cv[::, 213:426].min()
+        r = self.data_cv[::, 426:].min()
         
-        self.vector.x = int(l.min() < 0.7)
-        self.vector.y = int(c.min() < 0.7)
-        self.vector.z = int(r.min() < 0.7)
+        self.vector.x = float(int(l < 0.7 or np.isnan(l))) 
+        self.vector.y = float(int(c < 0.7 or np.isnan(c)))
+        self.vector.z = float(int(r < 0.7 or np.isnan(r)))
         
         self.publisher.publish(self.vector)
         

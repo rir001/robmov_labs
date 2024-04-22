@@ -5,19 +5,22 @@ np.float = float
 import rclpy
 from tf_transformations import euler_from_quaternion, quaternion_from_euler
 from rclpy.node import Node
-from geometry_msgs.msg import Twist, PoseArray, Pose, Point, Quaternion
+from geometry_msgs.msg import Twist, PoseArray, Pose, Point, Quaternion, Vector3
+from threading import Thread
 
 
 class DeadReckoningNav( Node ):
     def __init__( self ):
         super().__init__( 'dead_reckoning_nav' )
-        self.subscription = self.create_subscription(PoseArray, 'goal_list', self.accion_mover_cb, 10)
+        self.subscription = self.create_subscription(PoseArray, 'goal_list', self.thread_function, 10)
+        self.subscription2 = self.create_subscription(Vector3, 'occupancy_state', self.trayectoria_cb, 10)
         self.cmd_vel_mux_pub = self.create_publisher(Twist, '/cmd_vel_mux/input/navigation', 10)
         self.speed = Twist()
         self.timer_period = 0.2 # seconds
         self.vel = 0.2          # m/s
         self.omega = 1.0        # rad/s
         self.t_ajuste = 1.1085     # factor de ajuste para el tiempo de duracion de los movimientos
+        self.pause_robot = False
         
         # Tests
         # self.aplicar_velocidad( [ [0.5, 0.0, 3.0], [0.0, 0.2, 1.0], [0.5, 0.0, 3.0], [0.0, 0.2, 1.0], [0.0, 0.0, 1.0] ] )
@@ -36,19 +39,25 @@ class DeadReckoningNav( Node ):
 
 
     def aplicar_velocidad( self, speed_command_list ):
-        for command in speed_command_list:
-            # print()
-            
+        for command in speed_command_list: 
+
             self.speed.linear.x = command[0]
             self.speed.angular.z = command[1]
-            t = command[2]*10**9
+            t_ejecucion = command[2]*10**9
 
             t_inicial = self.get_clock().now().nanoseconds
             t_actual = self.get_clock().now().nanoseconds
             contador = 0
             
-            while t_actual - t_inicial < t:
-                if (t_actual - t_inicial) > self.timer_period*contador*10**9:
+            while t_actual - t_inicial < t_ejecucion:
+                
+                while self.pause_robot:
+                    t_transcurrido = t_actual - t_inicial
+                    t_faltante = t_ejecucion - t_transcurrido
+                    t_inicial = t_transcurrido + t_inicial
+                    t_ejecucion = t_faltante
+                
+                if (t_actual - t_inicial ) > self.timer_period*contador*10**9:
                     contador += 1
                     self.cmd_vel_mux_pub.publish(self.speed)
                     self.get_logger().info(f'Moving: v={self.speed.linear.x}, w={self.speed.angular.z},     {contador}')
@@ -93,7 +102,6 @@ class DeadReckoningNav( Node ):
     
     
     def accion_mover_cb(self, goal_list):
-        
         for pose in goal_list.poses:
             
             angles = euler_from_quaternion([pose.orientation.x,  pose.orientation.y, pose.orientation.z, pose.orientation.w])
@@ -102,7 +110,22 @@ class DeadReckoningNav( Node ):
             self.get_logger().info(f'Next Goal: {goal}')
             self.mover_robot_a_destino(goal)
             
-            
+    
+    def trayectoria_cb(self, vector):
+        lcr = (vector.x, vector.y, vector.z)
+        
+        if lcr == (0.0, 0.0, 0.0):
+            self.pause_robot = False
+        
+        else:
+            self.pause_robot = True
+            if int(lcr[0]):
+                self.get_logger().info("obstacle left")
+            if int(lcr[1]):
+                self.get_logger().info("obstacle center")
+            if int(lcr[2]):
+                self.get_logger().info("obstacle right")
+
     
     ############################
     ### Funciones Auxiliares ###
@@ -123,7 +146,10 @@ class DeadReckoningNav( Node ):
         '''
         tiempo = float(distancia/self.vel)
         return [self.vel, 0.0, tiempo]
-        
+    
+    def thread_function(self, goal_list):
+        thread = Thread(target=self.accion_mover_cb, args=(goal_list,))
+        thread.start()
 
 
 def main():
