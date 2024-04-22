@@ -27,7 +27,7 @@ class PoseLoader(Node):
     def read_file(self):
         poses = []
         # with open( 'txts/' + input("Ingrese el nombre del archivo de texto: ") + '.txt', 'r') as file:
-        with open( '../text/cuadrado.txt', 'r') as file:
+        with open( 'src/robmov_labs/text/cuadrado.txt', 'r') as file:
             for line in file:
                 x, y, theta = line.split(',')
                 
