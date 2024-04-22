@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="robmov_labs" exec="real_pose_reader" name="real_pose_reader"/>
+</launch>

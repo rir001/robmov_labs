@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="robmov_labs" exec="pose_loader" name="pose_loader"/>
+</launch>

@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="robmov_labs" exec="dead_reackoning" name="dead_reackoning"/>
+</launch>
