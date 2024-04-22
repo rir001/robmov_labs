@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import numpy as np
+np.float = float
 
 import rclpy
 from rclpy.node import Node
@@ -24,11 +26,12 @@ class OdometryReader( Node ):
             x = odom.pose.pose.position.x
             y = odom.pose.pose.position.y
             z = odom.pose.pose.position.z
-            roll, pitch, yaw = euler_from_quaternion( ( odom.pose.pose.orientation.x,
-                                                        odom.pose.pose.orientation.y,
-                                                        odom.pose.pose.orientation.z,
-                                                        odom.pose.pose.orientation.w ) )
-            pos = (round(x,4), round(y,4), round(yaw,4))
+            w = odom.pose.pose.position.w
+        
+            roll, pitch, yaw = euler_from_quaternion( ( x, y, z, w ) )
+
+            pos = (round(x, 4), round(y, 4), round(yaw, 4))
+
             if pos != self.prev:
                 self.contador = 0
                 if self.flag1:
@@ -64,8 +67,12 @@ class OdometryReader( Node ):
         self.flag3 = True
 
 
-if __name__ == '__main__':
+def main( args = None ):
+    rclpy.init( args = args )
+    odom_reader = OdometryReader()
+    rclpy.spin( odom_reader )
+    rclpy.shutdown()
 
-  rclpy.init()
-  odom_reader = OdometryReader()
-  rclpy.spin( odom_reader )
+
+if __name__ == '__main__':
+    main()

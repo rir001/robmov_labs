@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 import numpy as np
-np.foat = float
+np.float = float
 
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseArray, Pose, Point, Quaternion
 from tf_transformations import quaternion_from_euler
 
+
 class PoseLoader(Node):
     def __init__(self ):
         super().__init__('pose_loader')
-        timer_period = 0.1  # seconds
-        self.timer = self.create_timer(timer_period, self.publish_poses)
+        self.timer = self.create_timer(0.1, self.publish_poses)
         self.publisher = self.create_publisher(PoseArray, 'goal_list', 10)
         self.poses = self.read_file()
         self.flag = True
@@ -26,22 +26,16 @@ class PoseLoader(Node):
     
     def read_file(self):
         poses = []
-        # with open( 'txts/' + input("Ingrese el nombre del archivo de texto: ") + '.txt', 'r') as file:
-        with open( 'src/robmov_labs/text/cuadrado.txt', 'r') as file:
+        # name = input("Ingrese el nombre del archivo de texto: ")
+        name = 'cuadrado'
+        with open(f'src/robmov_labs/text/{name}.txt', 'r') as file:
             for line in file:
-                x, y, theta = line.split(',')
-                
-                if "\n" in theta:
-                    theta = theta.replace("\n", "")
-                    
-                if "pi" in theta:
-                    theta = theta.replace("pi", "1")
-                    theta = eval(theta) * np.pi
-                
-                q = quaternion_from_euler(0, 0, theta)
-                pose = Pose(position = Point(x=float(x), y=float(y), z=float(0)), orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3]))
-                poses.append(pose)
-                
+                x, y, theta = line.strip().replace("pi", str(np.pi)).split(',')
+                poses.append(Pose(
+                    position = Point(x=float(x), y=float(y), z=0),
+                    orientation = Quaternion(*quaternion_from_euler(0, 0, theta))
+                    )
+                )
         return poses
     
 def main(args=None):
