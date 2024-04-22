@@ -26,9 +26,12 @@ class OdometryReader( Node ):
             x = odom.pose.pose.position.x
             y = odom.pose.pose.position.y
             z = odom.pose.pose.position.z
-            w = odom.pose.pose.position.w
-        
-            roll, pitch, yaw = euler_from_quaternion( ( x, y, z, w ) )
+            roll, pitch, yaw = euler_from_quaternion(( 
+                odom.pose.pose.orientation.x,
+                odom.pose.pose.orientation.y,
+                odom.pose.pose.orientation.z,
+                odom.pose.pose.orientation.w )
+            )
 
             pos = (round(x, 4), round(y, 4), round(yaw, 4))
 

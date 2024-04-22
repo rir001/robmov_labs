@@ -22,10 +22,14 @@ class ObstacleDetector(Node):
 
     def depth_cb( self, data ):
         self.data_cv = self.bridge.imgmsg_to_cv2( data )
+
+        l = self.data_cv[::, :213].min()
+        c = self.data_cv[::, 213:426].min()
+        r = self.data_cv[::, 426:].min()
         
-        self.vector.x = float(int(self.data_cv[::,    :213].min() < 0.7 or np.isnan(l))) 
-        self.vector.y = float(int(self.data_cv[::, 213:426].min() < 0.7 or np.isnan(c)))
-        self.vector.z = float(int(self.data_cv[::, 426:   ].min() < 0.7 or np.isnan(r)))
+        self.vector.x = float(int(l < 0.7 or np.isnan(l))) 
+        self.vector.y = float(int(c < 0.7 or np.isnan(c)))
+        self.vector.z = float(int(r < 0.7 or np.isnan(r)))
         
         self.publisher.publish(self.vector)
         

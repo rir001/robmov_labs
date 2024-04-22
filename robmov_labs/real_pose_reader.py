@@ -26,9 +26,14 @@ class RealPoseReader( Node ):
             x = pos.position.x
             y = pos.position.y
             z = pos.position.z
-            w = pos.position.w
 
-            roll, pitch, yaw = euler_from_quaternion((x, y, z, w))
+            roll, pitch, yaw = euler_from_quaternion((
+                pos.orientation.x,
+                pos.orientation.y,
+                pos.orientation.z,
+                pos.orientation.w
+                )    
+            )
 
             pos = (round(x, 4), round(y, 4), round(yaw, 4))
 
