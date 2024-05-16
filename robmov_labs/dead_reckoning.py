@@ -48,6 +48,7 @@ class DeadReckoningNav( Node ):
 
             contador = 0
 
+
             delta = 0
             while t_actual - t_inicial - delta < t_ejecucion:
 
