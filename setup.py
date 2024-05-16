@@ -1,4 +1,5 @@
 from setuptools import find_packages, setup
+from glob import glob
 
 package_name = 'robmov_labs'
 
@@ -21,6 +22,11 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'odometry_reader = robmov_labs.odometry_reader:main',
+            'pose_loader = robmov_labs.pose_loader:main',
+            'real_pose_reader = robmov_labs.real_pose_reader:main',
+            'dead_reckoning = robmov_labs.dead_reckoning:main',
+            'obstacle_detector = robmov_labs.obstacle_detector:main',
         ],
     },
 )

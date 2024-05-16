@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="robmov_labs" exec="odometry_reader" name="odometry_reader"/>
+</launch>

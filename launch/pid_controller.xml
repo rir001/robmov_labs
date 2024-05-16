@@ -1,0 +1,8 @@
+<launch>
+
+  <!--<node pkg="robmov_labs" exec="pid_controller" name="pid_controller" namespace="lalala" output="screen" />-->
+  <node pkg="robmov_labs" exec="pid_controller" name="pid_controller" output="screen" />
+  <node pkg="robmov_labs" exec="virtual_robot" name="virtual_robot" output="screen" />
+
+</launch>
+
