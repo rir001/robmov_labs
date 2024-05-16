@@ -35,7 +35,7 @@ class ObstacleDetector(Node):
         
     def mostrar(self):
         while True:
-            if type(self.data_cv) == np.:
+            if type(self.data_cv) == np.array:
                 cv2.imshow('frame1', self.data_cv) 
                 
                 if cv2.waitKey(1) & 0xFF == 27: 
