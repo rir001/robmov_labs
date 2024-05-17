@@ -5,6 +5,8 @@ from rclpy.node import Node
 from std_msgs.msg import Float64
 from std_msgs.msg import Empty
 
+mode = "P"
+
 
 class PIDController( Node ):
 
@@ -29,7 +31,9 @@ class PIDController( Node ):
 
     def state_cb( self, msg ):
         if self.setpoint == None:
+            self.get_logger().info(str(msg))
             return
+
         self.state = msg.data
         error = self.setpoint - self.state
 
@@ -54,12 +58,18 @@ class PIDController( Node ):
 
 def run_pid_desp():
     rclpy.init()
-    pid_desp_ctrl = PIDController( 0.5, name="desp")
+    if mode == "P":
+        pid_desp_ctrl = PIDController( kp=0.3, name="desp")
+    if mode == "PI":
+        pid_desp_ctrl = PIDController( kp=0.3, ki=0, name="desp")
     rclpy.spin( pid_desp_ctrl )
 
 def run_pid_angle():
     rclpy.init()
-    p_angle_ctrl = PIDController( 0.5, name="angle")
+    if mode == "P":
+        p_angle_ctrl = PIDController( kp=0.5, name="angle")
+    if mode == "PI":
+        p_angle_ctrl = PIDController( kp=0.5, ki=0, name="angle")
     rclpy.spin( p_angle_ctrl  )
 
 def main():

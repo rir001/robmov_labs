@@ -27,12 +27,12 @@ class DeadReckoningNav( Node ):
         self.cmd_vel_mux_pub            = self.create_publisher( Twist, '/cmd_vel_mux/input/navigation', 10 )
 
         # angle PID
-        self.velocity_angle_sub         = self.create_subscription( Vector3, 'velocity_angle', self.velocity_angle_sub_thread, 1 )
+        self.velocity_angle_sub         = self.create_subscription( Float64, 'velocity_angle', self.velocity_angle_sub_thread, 1 )
         self.setpoint_angle_pub         = self.create_publisher( Float64, 'setpoint_angle', 1 )
         self.state_angle_pub            = self.create_publisher( Float64, 'state_angle', 1 )
 
         # displacement PID
-        self.velocity_desp_sub          = self.create_subscription( Vector3, 'velocity_desp', self.velocity_desp_sub_thread, 1 )
+        self.velocity_desp_sub          = self.create_subscription( Float64, 'velocity_desp', self.velocity_desp_sub_thread, 1 )
         self.setpoint_desp_pub          = self.create_publisher( Float64, 'setpoint_desp', 1 )
         self.state_desp_pub             = self.create_publisher( Float64, 'state_desp', 1 )
 
@@ -40,9 +40,9 @@ class DeadReckoningNav( Node ):
         self.timer_period = 0.2 # seconds
         self.pause_robot = False
 
-        self.x = 0
-        self.y = 0
-        self.w = 0
+        self.x = 0.0
+        self.y = 0.0
+        self.w = 0.0
 
 
     def real_pose_thread(self, position):
@@ -54,10 +54,20 @@ class DeadReckoningNav( Node ):
         thread.start()
 
     def velocity_angle_sub_thread(self, vel):
-        pass
+        thread = Thread(target=self.set_velocity_angle, args=(vel,))
+        thread.start()
+
+    def set_velocity_angle(self, vel):
+        self.speed.angular.z = min(vel.data, 0.2)
+        self.cmd_vel_mux_pub.publish(self.speed)
 
     def velocity_desp_sub_thread(self, vel):
-        pass
+        thread = Thread(target=self.set_velocity_desp, args=(vel,))
+        thread.start()
+
+    def set_velocity_desp(self, vel):
+        self.speed.linear.x = min(vel.data, 0.2)
+        self.cmd_vel_mux_pub.publish(self.speed)
 
     def send_setpoint_desp(self, data):
         msg = Float64()
@@ -143,41 +153,28 @@ class DeadReckoningNav( Node ):
 
             if command[0] != 0:
                 self.get_logger().info("sas")
-                self.get_logger().info(str(np.float64(command[0])))
-                self.setpoint_angle_pub.publish(np.float64(command[0]))
+                self.send_setpoint_desp(command[0])
 
-                # while True:
-                #     self.get_logger().info(str(self.x))
-                #     self.get_logger().info(str(self.y))
+                start_x = self.x
+                start_y = self.y
 
+                while abs(np.sqrt((self.x - start_x)**2 + (self.y - start_y)**2) - abs(command[0])) > 0.01:
+                    self.send_state_desp(np.sqrt((self.x - start_x)**2 + (self.y - start_y)**2))
 
+                self.send_setpoint_desp(0.0)
 
-            # self.speed.linear.x = command[0]
-            # self.speed.angular.z = command[1]
+            if command[1] != 0:
+                self.get_logger().info("sus")
+                self.send_setpoint_angle(command[1])
 
-            # contador = 0
+                start_w = self.w
 
+                while abs(command[1] - (self.w - start_w)) > 0.1:
+                    self.send_state_angle(self.w - start_w)
 
-            # delta = 0
-            # while t_actual - t_inicial - delta < t_ejecucion:
-
-            #     pause = True
-            #     while self.pause_robot:
-            #         if pause:
-            #             self.get_logger().info("Robot paused")
-            #             p_start = self.get_clock().now().nanoseconds
-            #         pause = False
-            #     if not pause:
-            #         delta += self.get_clock().now().nanoseconds - p_start
+                self.send_setpoint_angle(0.0)
 
 
-            #     if (t_actual - t_inicial - delta) > self.timer_period*contador*10**9:
-            #         if pause:
-            #             contador += 1
-            #         self.cmd_vel_mux_pub.publish(self.speed)
-            #         self.get_logger().info(f'Moving: v={self.speed.linear.x}, w={self.speed.angular.z},     {contador}')
-
-            #     t_actual = self.get_clock().now().nanoseconds
 
 
     def trayectoria_cb(self, vector):
