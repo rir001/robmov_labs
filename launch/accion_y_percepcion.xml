@@ -5,5 +5,5 @@
   <include file="$(find-pkg-share robmov_labs)/obstacle_detector.xml" />
   <include file="$(find-pkg-share robmov_labs)/dead_reckoning.xml" />
   <include file="$(find-pkg-share robmov_labs)/pose_loader.xml" />
-  
+
 </launch>

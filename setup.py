@@ -27,6 +27,8 @@ setup(
             'real_pose_reader = robmov_labs.real_pose_reader:main',
             'dead_reckoning = robmov_labs.dead_reckoning:main',
             'obstacle_detector = robmov_labs.obstacle_detector:main',
+            'pid_angle = robmov_labs.pid:run_pid_angle',
+            'pid_desp = robmov_labs.pid:run_pid_desp',
         ],
     },
 )

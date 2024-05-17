@@ -36,10 +36,13 @@ class PIDController( Node ):
     p_actuation = self.kp*error
 
     # Integrative (Implement me!)
-    i_actuation = self.ki*0
+    i_actuation = self.ki*self.cumulated_error
 
     # Derivative (Implement me!)
-    d_actuation = self.kd*0
+    d_actuation = self.kd*(self.past_error + error)/2
+
+    self.past_error = error
+    self.cumulated_error += error
 
     # Actuation
     actuation = p_actuation + i_actuation + d_actuation
@@ -52,6 +55,8 @@ class PIDController( Node ):
   def reset( self ):
     self.setpoint = None
     self.state = None
+    self.past_error = 0
+    self.cumulated_error = 0
 
 
 def main():

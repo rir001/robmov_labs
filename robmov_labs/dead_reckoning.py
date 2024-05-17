@@ -4,10 +4,11 @@ from numpy import pi
 np.float = float
 
 import rclpy
-from tf_transformations import euler_from_quaternion, quaternion_from_euler
-from rclpy.node import Node
-from geometry_msgs.msg import Twist, PoseArray, Pose, Point, Quaternion, Vector3
 from threading import Thread
+from rclpy.node import Node
+from std_msgs.msg import Float64
+from tf_transformations import euler_from_quaternion, quaternion_from_euler
+from geometry_msgs.msg import Twist, PoseArray, Pose, Point, Quaternion, Vector3
 
 
 OMEGA = 1.0          # rad/s
@@ -15,17 +16,29 @@ T_AJUSTE = 1.1085    # factor de ajuste para el tiempo de duracion de los movimi
 VEL = 0.2            # m/s
 
 class DeadReckoningNav( Node ):
+
     def __init__( self ):
         super().__init__( 'dead_reckoning_nav' )
-        self.subscription = self.create_subscription(PoseArray, 'goal_list', self.thread_function, 10)
+
         self.subscription2 = self.create_subscription(Vector3, 'occupancy_state', self.trayectoria_cb, 10)
+        self.subscription = self.create_subscription(PoseArray, 'goal_list', self.accion_mover_cb_thread, 10)
+
         self.cmd_vel_mux_pub = self.create_publisher(Twist, '/cmd_vel_mux/input/navigation', 10)
+
+        self.velocity_angle_sub = self.create_subscription(Vector3, 'velocity_angle', self.IMPLEMENTA, 1)
+        self.setpoint_angle_pub = self.create_publisher(Float64, 'setpoint_angle', 1)
+        self.state_angle_pub = self.create_publisher(Float64, 'state_angle', 1)
+
+        self.velocity_desp = self.create_subscription(Vector3, 'velocity_desp', self.IMPLEMENTA, 1)
+        self.setpoint_desp = self.create_publisher(Float64, 'setpoint_desp', 1)
+        self.state_desp = self.create_publisher(Float64, 'state_desp', 1)
+
         self.speed = Twist()
         self.timer_period = 0.2 # seconds
         self.pause_robot = False
 
 
-    def thread_function(self, goal_list):
+    def accion_mover_cb_thread(self, goal_list):
         thread = Thread(target=self.accion_mover_cb, args=(goal_list,))
         thread.start()
 
@@ -38,37 +51,6 @@ class DeadReckoningNav( Node ):
 
             self.get_logger().info(f'Next Goal: {goal}')
             self.mover_robot_a_destino(goal)
-
-
-    def aplicar_velocidad( self, speed_command_list ):
-        for command in speed_command_list:
-
-            self.speed.linear.x = command[0]
-            self.speed.angular.z = command[1]
-
-            contador = 0
-
-
-            delta = 0
-            while t_actual - t_inicial - delta < t_ejecucion:
-
-                pause = True
-                while self.pause_robot:
-                    if pause:
-                        self.get_logger().info("Robot paused")
-                        p_start = self.get_clock().now().nanoseconds
-                    pause = False
-                if not pause:
-                    delta += self.get_clock().now().nanoseconds - p_start
-
-
-                if (t_actual - t_inicial - delta) > self.timer_period*contador*10**9:
-                    if pause:
-                        contador += 1
-                    self.cmd_vel_mux_pub.publish(self.speed)
-                    self.get_logger().info(f'Moving: v={self.speed.linear.x}, w={self.speed.angular.z},     {contador}')
-
-                t_actual = self.get_clock().now().nanoseconds
 
 
     def mover_robot_a_destino(self, goal_pose):
@@ -102,20 +84,47 @@ class DeadReckoningNav( Node ):
         self.aplicar_velocidad(speed_command_list)
 
 
+
+    def aplicar_velocidad( self, speed_command_list):
+        for command in speed_command_list:
+
+            self.speed.linear.x = command[0]
+            self.speed.angular.z = command[1]
+
+            contador = 0
+
+
+            delta = 0
+            while t_actual - t_inicial - delta < t_ejecucion:
+
+                pause = True
+                while self.pause_robot:
+                    if pause:
+                        self.get_logger().info("Robot paused")
+                        p_start = self.get_clock().now().nanoseconds
+                    pause = False
+                if not pause:
+                    delta += self.get_clock().now().nanoseconds - p_start
+
+
+                if (t_actual - t_inicial - delta) > self.timer_period*contador*10**9:
+                    if pause:
+                        contador += 1
+                    self.cmd_vel_mux_pub.publish(self.speed)
+                    self.get_logger().info(f'Moving: v={self.speed.linear.x}, w={self.speed.angular.z},     {contador}')
+
+                t_actual = self.get_clock().now().nanoseconds
+
+
     def trayectoria_cb(self, vector):
         lcr = (vector.x, vector.y, vector.z)
-
         if lcr == (0.0, 0.0, 0.0):
             self.pause_robot = False
-
         else:
             self.pause_robot = True
-            if int(lcr[0]):
-                self.get_logger().info("obstacle left")
-            if int(lcr[1]):
-                self.get_logger().info("obstacle center")
-            if int(lcr[2]):
-                self.get_logger().info("obstacle right")
+            if int(lcr[0]): self.get_logger().info("obstacle left")
+            if int(lcr[1]): self.get_logger().info("obstacle center")
+            if int(lcr[2]): self.get_logger().info("obstacle right")
 
 
 ############################
