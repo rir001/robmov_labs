@@ -7,13 +7,16 @@ import rclpy
 from threading import Thread
 from rclpy.node import Node
 from std_msgs.msg import Float64
-from tf_transformations import euler_from_quaternion, quaternion_from_euler
-from geometry_msgs.msg import Twist, PoseArray, Pose, Point, Quaternion, Vector3
+from tf_transformations import euler_from_quaternion
+from geometry_msgs.msg import Twist, PoseArray, Pose, Vector3
 
 
 OMEGA = 1.0          # rad/s
 T_AJUSTE = 1.1085    # factor de ajuste para el tiempo de duracion de los movimientos
 VEL = 0.2            # m/s
+
+TOLERANCIA_ANG = 0.01
+TOLERANCIA_DESP = 0.01
 
 class DeadReckoningNav( Node ):
 
@@ -37,7 +40,6 @@ class DeadReckoningNav( Node ):
         self.state_desp_pub             = self.create_publisher( Float64, 'state_desp', 1 )
 
         self.speed = Twist()
-        self.timer_period = 0.2 # seconds
         self.pause_robot = False
 
         self.x = 0.0
@@ -58,7 +60,7 @@ class DeadReckoningNav( Node ):
         thread.start()
 
     def set_velocity_angle(self, vel):
-        self.speed.angular.z = min(vel.data, 0.2) if vel.data > 0 else max(vel.data, -0.2)
+        self.speed.angular.z = min(vel.data, VEL) if vel.data > 0 else max(vel.data, -VEL)
         self.cmd_vel_mux_pub.publish(self.speed)
 
     def velocity_desp_sub_thread(self, vel):
@@ -66,32 +68,32 @@ class DeadReckoningNav( Node ):
         thread.start()
 
     def set_velocity_desp(self, vel):
-        self.speed.linear.x = min(vel.data, 0.2) if vel.data > 0 else max(vel.data, -0.2)
+        self.speed.linear.x = min(vel.data, VEL) if vel.data > 0 else max(vel.data, -VEL)
         self.cmd_vel_mux_pub.publish(self.speed)
 
     def send_setpoint_desp(self, data):
         msg = Float64()
         msg.data = data
         self.setpoint_desp_pub.publish( msg )
-        self.get_logger().info( 'send displacement target: %.4f' % ( data ) )
+        # self.get_logger().info( 'send displacement target: %.4f' % ( data ) )
 
     def send_setpoint_angle(self, data):
         msg = Float64()
         msg.data = data
         self.setpoint_angle_pub.publish( msg )
-        self.get_logger().info( 'send angle target: %.4f' % ( data ) )
+        # self.get_logger().info( 'send angle target: %.4f' % ( data ) )
 
     def send_state_desp(self, data):
         msg = Float64()
         msg.data = data
         self.state_desp_pub.publish( msg )
-        self.get_logger().info( 'send actual displacement: %.4f' % ( data ) )
+        # self.get_logger().info( 'send actual displacement: %.4f' % ( data ) )
 
     def send_state_angle(self, data):
         msg = Float64()
         msg.data = data
         self.state_angle_pub.publish( msg )
-        self.get_logger().info( 'send actual angle: %.4f' % ( data ) )
+        # self.get_logger().info( 'send actual angle: %.4f' % ( data ) )
 
     def real_pose_loader(self, position):
         self.x = position.position.x
@@ -145,21 +147,15 @@ class DeadReckoningNav( Node ):
         self.aplicar_velocidad(speed_command_list)
 
 
-
-
-
     def aplicar_velocidad( self, speed_command_list):
         for command in speed_command_list:
 
             if command[0] != 0:
-                self.get_logger().info("sas")
-                self.send_setpoint_desp(command[0])
-
                 start_x = self.x
                 start_y = self.y
 
                 pose = np.sqrt((self.x - start_x)**2 + (self.y - start_y)**2)
-                while abs(abs(command[0]) - pose) > 0.01:
+                while abs(abs(command[0]) - pose) > TOLERANCIA_DESP:
                     self.send_state_desp(pose)
                     pose = np.sqrt((self.x - start_x)**2 + (self.y - start_y)**2)
 
@@ -167,34 +163,20 @@ class DeadReckoningNav( Node ):
                 self.send_state_desp(0.0)
 
             if command[1] != 0:
-                self.get_logger().info("sus")
-                self.send_setpoint_angle(command[1])
-
                 start_w = self.w
 
-                pose = self.w - start_w
-                while abs(command[1] - pose) > 0.01:
+                pose = dif_calulator(self.w, start_w)
+                while abs(dif_calulator(command[1], pose)) > TOLERANCIA_ANG:
                     self.send_state_angle(pose)
-                    pose = self.w - start_w
+                    pose = dif_calulator(self.w, start_w)
 
                 self.send_setpoint_angle(0.0)
                 self.send_state_angle(0.0)
 
 
-
-
-    def trayectoria_cb(self, vector):
-        lcr = (vector.x, vector.y, vector.z)
-        if lcr == (0.0, 0.0, 0.0):
-            self.pause_robot = False
-        else:
-            self.pause_robot = True
-            if int(lcr[0]): self.get_logger().info("obstacle left")
-            if int(lcr[1]): self.get_logger().info("obstacle center")
-            if int(lcr[2]): self.get_logger().info("obstacle right")
-
-
-
+def dif_calulator(ang1, ang2):
+    ang = ang1 - ang2
+    return ang if ang > -pi else ang +  2*pi
 
 
 

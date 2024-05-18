@@ -5,7 +5,8 @@ from rclpy.node import Node
 from std_msgs.msg import Float64
 from std_msgs.msg import Empty
 
-mode = "P"
+
+MODE = "P"
 
 
 class PIDController( Node ):
@@ -30,16 +31,14 @@ class PIDController( Node ):
         self.setpoint = msg.data
 
     def state_cb( self, msg ):
-        if self.setpoint == None:
-            self.get_logger().info(str(msg))
-            return
+        if self.setpoint == None: return
 
         self.state = msg.data
         error = self.setpoint - self.state
 
         p_actuation = self.kp*error
         i_actuation = self.ki*self.cumulated_error
-        d_actuation = self.kd*(self.past_error + error)/2
+        d_actuation = self.kd*(self.past_error + error)/2 #implementar con tiempo
 
         self.past_error = error
         self.cumulated_error += error
@@ -58,18 +57,18 @@ class PIDController( Node ):
 
 def run_pid_desp():
     rclpy.init()
-    if mode == "P":
-        pid_desp_ctrl = PIDController( kp=0.55, name="desp")
-    if mode == "PI":
-        pid_desp_ctrl = PIDController( kp=0.3, ki=0, name="desp")
+    if MODE == "P":
+        pid_desp_ctrl = PIDController( kp=1.6, name="desp")
+    if MODE == "PI":
+        pid_desp_ctrl = PIDController( kp=1.6, ki=0.001, name="desp")
     rclpy.spin( pid_desp_ctrl )
 
 def run_pid_angle():
     rclpy.init()
-    if mode == "P":
-        p_angle_ctrl = PIDController( kp=1.0, name="angle")
-    if mode == "PI":
-        p_angle_ctrl = PIDController( kp=0.5, ki=0, name="angle")
+    if MODE == "P":
+        p_angle_ctrl = PIDController( kp=5.5, name="angle")
+    if MODE == "PI":
+        p_angle_ctrl = PIDController( kp=5.5, ki=0.001, name="angle")
     rclpy.spin( p_angle_ctrl  )
 
 def main():
