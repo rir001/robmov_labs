@@ -59,7 +59,7 @@ class PIDController( Node ):
 def run_pid_desp():
     rclpy.init()
     if mode == "P":
-        pid_desp_ctrl = PIDController( kp=0.3, name="desp")
+        pid_desp_ctrl = PIDController( kp=0.55, name="desp")
     if mode == "PI":
         pid_desp_ctrl = PIDController( kp=0.3, ki=0, name="desp")
     rclpy.spin( pid_desp_ctrl )
@@ -67,7 +67,7 @@ def run_pid_desp():
 def run_pid_angle():
     rclpy.init()
     if mode == "P":
-        p_angle_ctrl = PIDController( kp=0.5, name="angle")
+        p_angle_ctrl = PIDController( kp=1.0, name="angle")
     if mode == "PI":
         p_angle_ctrl = PIDController( kp=0.5, ki=0, name="angle")
     rclpy.spin( p_angle_ctrl  )

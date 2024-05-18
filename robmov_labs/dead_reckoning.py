@@ -58,7 +58,7 @@ class DeadReckoningNav( Node ):
         thread.start()
 
     def set_velocity_angle(self, vel):
-        self.speed.angular.z = min(vel.data, 0.2)
+        self.speed.angular.z = min(vel.data, 0.2) if vel.data > 0 else max(vel.data, -0.2)
         self.cmd_vel_mux_pub.publish(self.speed)
 
     def velocity_desp_sub_thread(self, vel):
@@ -66,7 +66,7 @@ class DeadReckoningNav( Node ):
         thread.start()
 
     def set_velocity_desp(self, vel):
-        self.speed.linear.x = min(vel.data, 0.2)
+        self.speed.linear.x = min(vel.data, 0.2) if vel.data > 0 else max(vel.data, -0.2)
         self.cmd_vel_mux_pub.publish(self.speed)
 
     def send_setpoint_desp(self, data):
@@ -158,10 +158,13 @@ class DeadReckoningNav( Node ):
                 start_x = self.x
                 start_y = self.y
 
-                while abs(np.sqrt((self.x - start_x)**2 + (self.y - start_y)**2) - abs(command[0])) > 0.01:
-                    self.send_state_desp(np.sqrt((self.x - start_x)**2 + (self.y - start_y)**2))
+                pose = np.sqrt((self.x - start_x)**2 + (self.y - start_y)**2)
+                while abs(abs(command[0]) - pose) > 0.01:
+                    self.send_state_desp(pose)
+                    pose = np.sqrt((self.x - start_x)**2 + (self.y - start_y)**2)
 
                 self.send_setpoint_desp(0.0)
+                self.send_state_desp(0.0)
 
             if command[1] != 0:
                 self.get_logger().info("sus")
@@ -169,10 +172,13 @@ class DeadReckoningNav( Node ):
 
                 start_w = self.w
 
-                while abs(command[1] - (self.w - start_w)) > 0.1:
-                    self.send_state_angle(self.w - start_w)
+                pose = self.w - start_w
+                while abs(command[1] - pose) > 0.01:
+                    self.send_state_angle(pose)
+                    pose = self.w - start_w
 
                 self.send_setpoint_angle(0.0)
+                self.send_state_angle(0.0)
 
 
 
