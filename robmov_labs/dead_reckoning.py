@@ -11,8 +11,6 @@ from tf_transformations import euler_from_quaternion
 from geometry_msgs.msg import Twist, PoseArray, Pose, Vector3
 
 
-OMEGA = 1.0          # rad/s
-T_AJUSTE = 1.1085    # factor de ajuste para el tiempo de duracion de los movimientos
 VEL = 0.2            # m/s
 
 TOLERANCIA_ANG = 0.01
@@ -23,7 +21,6 @@ class DeadReckoningNav( Node ):
     def __init__( self ):
         super().__init__( 'dead_reckoning_nav' )
 
-        self.occupancy_state_sub        = self.create_subscription( Vector3, 'occupancy_state', self.trayectoria_cb, 10 )
         self.real_pose_sub              = self.create_subscription( Pose, '/real_pose', self.real_pose_loader, 1 )
         self.goal_list_sub              = self.create_subscription( PoseArray, 'goal_list', self.accion_mover_cb_thread, 10 )
 
@@ -38,6 +35,7 @@ class DeadReckoningNav( Node ):
         self.velocity_desp_sub          = self.create_subscription( Float64, 'velocity_desp', self.velocity_desp_sub_thread, 1 )
         self.setpoint_desp_pub          = self.create_publisher( Float64, 'setpoint_desp', 1 )
         self.state_desp_pub             = self.create_publisher( Float64, 'state_desp', 1 )
+
 
         self.speed = Twist()
         self.pause_robot = False
@@ -134,7 +132,10 @@ class DeadReckoningNav( Node ):
                 speed_command_list.append((0, pi/2))
                 speed_command_list.append((y, 0))
 
-        theta_actual = sum(np.array(speed_command_list)[:, 1])
+        if len(speed_command_list) > 0:
+            theta_actual = sum(np.array(speed_command_list)[:, 1])
+        else:
+            theta_actual = 0
 
         if round(theta_actual,2) != round(theta,2):
             if theta_actual < theta:
@@ -153,9 +154,10 @@ class DeadReckoningNav( Node ):
             if command[0] != 0:
                 start_x = self.x
                 start_y = self.y
+                self.send_setpoint_desp(command[0])
 
                 pose = np.sqrt((self.x - start_x)**2 + (self.y - start_y)**2)
-                while abs(abs(command[0]) - pose) > TOLERANCIA_DESP:
+                while abs(self.speed.linear.x) > TOLERANCIA_DESP or self.speed.linear.x == 0:
                     self.send_state_desp(pose)
                     pose = np.sqrt((self.x - start_x)**2 + (self.y - start_y)**2)
 
@@ -164,14 +166,16 @@ class DeadReckoningNav( Node ):
 
             if command[1] != 0:
                 start_w = self.w
+                self.send_setpoint_angle(command[1])
 
                 pose = dif_calulator(self.w, start_w)
-                while abs(dif_calulator(command[1], pose)) > TOLERANCIA_ANG:
+                while abs(self.speed.angular.z) > TOLERANCIA_ANG or self.speed.angular.z == 0:
                     self.send_state_angle(pose)
                     pose = dif_calulator(self.w, start_w)
 
                 self.send_setpoint_angle(0.0)
                 self.send_state_angle(0.0)
+
 
 
 def dif_calulator(ang1, ang2):

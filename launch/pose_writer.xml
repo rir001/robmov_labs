@@ -1,0 +1,5 @@
+<launch>
+
+    <node pkg="robmov_labs" exec="pose_writer" name="pose_writer"/>
+
+</launch>

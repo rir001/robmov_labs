@@ -50,6 +50,7 @@ class PIDController( Node ):
         self.actuation_pub.publish( msg )
 
     def reset( self ):
+        self.get_logger().info(f'{self.name} error: {self.setpoint - self.state if self.state and self.setpoint else "None"}' )
         self.setpoint = None
         self.state = None
         self.past_error = 0
@@ -58,7 +59,7 @@ class PIDController( Node ):
 def run_pid_desp():
     rclpy.init()
     if MODE == "P":
-        pid_desp_ctrl = PIDController( kp=1.6, name="desp")
+        pid_desp_ctrl = PIDController( kp=16, name="desp")
     if MODE == "PI":
         pid_desp_ctrl = PIDController( kp=1.6, ki=0.001, name="desp")
     rclpy.spin( pid_desp_ctrl )

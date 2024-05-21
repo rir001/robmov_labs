@@ -5,6 +5,8 @@
     <include file="$(find-pkg-share robmov_labs)/pid.xml" />
     <include file="$(find-pkg-share robmov_labs)/pose_loader.xml" />
 
+    <!-- <include file="$(find-pkg-share robmov_labs)/pose_writer.xml" /> -->
+
     <include file="$(find-pkg-share robmov_labs)/dead_reckoning.xml" />
 
 </launch>

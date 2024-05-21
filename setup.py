@@ -27,6 +27,7 @@ setup(
             'obstacle_detector      = robmov_labs.obstacle_detector:main',
             'pid_angle              = robmov_labs.pid_controller:run_pid_angle',
             'pid_desp               = robmov_labs.pid_controller:run_pid_desp',
+            'pose_writer            = robmov_labs.pose_writer:main',
         ],
     },
 )
