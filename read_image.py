@@ -10,10 +10,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import matplotlib.pyplot as plt
 
-VEL = 0.2            # m/s
 
-TOLERANCIA_ANG = 0.01
-TOLERANCIA_DESP = 0.01
 
 class ReadImage( Node ):
 
