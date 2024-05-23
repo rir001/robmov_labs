@@ -26,9 +26,9 @@ class WriterPose( Node ):
 
         self.get_logger().info(f'x:{x} y:{y}')
 
-        self.canvas[int(y), int(x)] = 0
+        self.canvas[500 - int(y), int(x)] = 0
 
-        plt.imsave("name.png", self.canvs)
+        plt.imsave("name.png", self.canvas)
 
 
 def main():
