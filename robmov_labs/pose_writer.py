@@ -10,6 +10,8 @@ from geometry_msgs.msg import Pose
 import matplotlib.pyplot as plt
 
 
+ESCALA = 130
+
 class WriterPose( Node ):
 
     def __init__( self ):
@@ -21,8 +23,8 @@ class WriterPose( Node ):
 
 
     def real_pose_writer(self, position):
-        x = position.position.x * 100
-        y = position.position.y * 100
+        x = position.position.x * ESCALA
+        y = position.position.y * ESCALA
 
         self.get_logger().info(f'x:{x} y:{y}')
 
