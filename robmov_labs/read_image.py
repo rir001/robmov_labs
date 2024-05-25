@@ -55,13 +55,7 @@ def filter_image(rgb_image):
 
     plt.imsave(f"sos.png", out)
 
-    kernel = np.array([
-        [1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1],
-    ])
+    kernel = np.array([[1]*7]*7)
 
 
     return cv2.morphologyEx(out, cv2.MORPH_OPEN, kernel)
