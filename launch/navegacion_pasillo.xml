@@ -1,15 +1,12 @@
 <launch>
     <include file="$(find-pkg-share very_simple_robot_simulator)/launch/minimal_simulator_py.xml" />
-    <include file="$(find-pkg-share very_simple_robot_simulator)/launch/openni_simulator.xml" /> -->
+    <include file="$(find-pkg-share very_simple_robot_simulator)/launch/openni_simulator.xml" />
     <node pkg="very_simple_robot_simulator" name="world_state_gui" exec="world_state_gui.py" output="screen" >
-        <param name="map_file" value="/root/RobMov/simulator/src/robmov_labs/maps/pasillo.yaml" />
+        <param name="map_file" value="$(find-pkg-share robmov_labs)/pasillo.yaml" />
     </node>
 
     <node pkg="robmov_labs" exec="pid"  name="pid" />
 
     <node pkg="robmov_labs" exec="nav_pasillo"  name="nav_pasillo" />
-
-
-
 
 </launch>
