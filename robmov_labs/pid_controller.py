@@ -74,7 +74,7 @@ def run_pid_angle():
 
 def main():
     rclpy.init()
-    p_ctrl = PIDController( 0.5 )
+    p_ctrl = PIDController( 0.3 )
     rclpy.spin( p_ctrl )
 
 if __name__ == '__main__':
