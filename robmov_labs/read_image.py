@@ -1,82 +1,126 @@
 #!/usr/bin/env python3
+import cv2
 import numpy as np
-from numpy import pi
 np.float = float
 
 import rclpy
 from rclpy.node import Node
+from threading import Thread
+from std_msgs.msg import Float64
 from sensor_msgs.msg import Image
 
 from cv_bridge import CvBridge
 import matplotlib.pyplot as plt
 
-import cv2
-import numpy as np
 
 
 class ReadImage( Node ):
 
     def __init__( self ):
         super().__init__( 'image_reader' )
-        self.kinect_image_sub = self.create_subscription( Image, '/kinect/image_raw', self.image_reader, 10 )
-        self.get_logger().info( "sos" )
         self.n = 0
+        self.bg = CvBridge()
+        self.kinect_image_sub   = self.create_subscription( Image, '/kinect/image_raw', self.image_reader, 10 )
+        self.position_pub       = self.create_publisher( Float64, '/blue_position', 10 )
+
+        self.get_logger().info( "image_reader: ON" )
+
+        self.mask = None
+        self.mask_b = np.array([ 83, 130, 149])
+        self.mask_t = np.array([128, 256, 256])
+        self.n = 8
 
 
     def image_reader(self, image):
-        # self.get_logger().info( image.data )
+        cv_image = self.bg.imgmsg_to_cv2(image, desired_encoding='passthrough')
+        self.cv_image = np.array(cv_image)
 
-        self.n += 1
-
-        bridge = CvBridge()
-        cv_image = bridge.imgmsg_to_cv2(image, desired_encoding='passthrough')
-
-        cv_image = np.array(cv_image)
-
-        t, b, l, r = get_margin(filter_image(cv_image))
-        print(self.n, t, b, l, r)
-        plt.imsave(f"{self.n}sas.png", cv_image[t:b, l:r])
-
-        # plt.imsave(f"{self.n}sas.png", cv_image)
-        print(self.n)
+        if not self.mask:
+            self.thread_filter_selector()
+        else:
+            t, b, l, r = self.get_margin(self.filter_image())
+            # plt.imsave(f"sas.png", self.cv_image[t:b, l:r])
+            msg = Float64()
+            msg.data = (l + r)/2
+            self.position_pub.publish( msg )
 
 
-def filter_image(rgb_image):
-    image_hsv = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
-
-    mask_H = (image_hsv[:, :, 0] <= 130) * (image_hsv[:, :, 0] >= 100)
-    mask_S = (image_hsv[:, :, 1] <= 300) * (image_hsv[:, :, 1] >= 100)
-    mask_V = (image_hsv[:, :, 2] <= 250) * (image_hsv[:, :, 2] >= 150)
-
-    out = rgb_image.copy()
-    out[:, :, 0] = out[:, :, 0] * mask_H * mask_S * mask_V
-    out[:, :, 1] = out[:, :, 1] * mask_H * mask_S * mask_V
-    out[:, :, 2] = out[:, :, 2] * mask_H * mask_S * mask_V
-
-    plt.imsave(f"sos.png", out)
-
-    kernel = np.array([[1]*7]*7)
+    def thread_filter_selector(self):
+        self.mask = 1
+        thread = Thread(target=self.filter_selector, daemon=True)
+        thread.start()
 
 
-    return cv2.morphologyEx(out, cv2.MORPH_OPEN, kernel)
+    def filter_selector(self):
+        windowName = 'HSV'
+        cv2.namedWindow(windowName)
+        cv2.createTrackbar('H_b'   , windowName, self.mask_b[0], 179, lambda x: None)
+        cv2.createTrackbar('H_t'   , windowName, self.mask_t[0], 179, lambda x: None)
+        cv2.createTrackbar('S_b'   , windowName, self.mask_b[1], 255, lambda x: None)
+        cv2.createTrackbar('S_t'   , windowName, self.mask_t[1], 255, lambda x: None)
+        cv2.createTrackbar('V_b'   , windowName, self.mask_b[2], 255, lambda x: None)
+        cv2.createTrackbar('V_t'   , windowName, self.mask_t[2], 255, lambda x: None)
+
+        cv2.createTrackbar('mask'  , windowName,   1,  20, lambda x: None)
+        cv2.setTrackbarMin('mask'  , windowName,   1)
+
+        out = self.cv_image.copy()
+
+        while True:
+            if (cv2.waitKey(1) & 0xFF) == 120: break
+
+            cv2.imshow(windowName, cv2.cvtColor(out, cv2.COLOR_RGB2BGR))
+
+            self.mask_b = np.array([
+                cv2.getTrackbarPos('H_b', windowName),
+                cv2.getTrackbarPos('S_b', windowName),
+                cv2.getTrackbarPos('V_b', windowName)])
+            self.mask_t = np.array([
+                cv2.getTrackbarPos('H_t', windowName),
+                cv2.getTrackbarPos('S_t', windowName),
+                cv2.getTrackbarPos('V_t', windowName)])
+            self.n = cv2.getTrackbarPos('mask', windowName)
+
+            out = self.cv_image.copy()
+            out = cv2.bitwise_and(out ,out, mask=cv2.inRange(
+                cv2.cvtColor(out, cv2.COLOR_RGB2HSV),
+                self.mask_b,
+                self.mask_t))
+            out = cv2.morphologyEx(out, cv2.MORPH_OPEN, np.array([[1]*self.n]*self.n))
+
+        cv2.destroyAllWindows()
 
 
-def get_margin(image):
-    step = 3
-    t, b, l, r = 0, image.shape[0]-1, 0, image.shape[1]-1
-    for y in range(0, image.shape[0], step):
-        if np.sum(image[y, :]) > 0 and not t:
-            t = y
-        if np.sum(image[image.shape[0] - y - 1, :]) > 0 and b == image.shape[0]-1:
-            b = y
+    def filter_image(self):
+        plt.imsave(f"sus.png", self.cv_image)
 
-    for x in range(0, image.shape[1], step):
-        if np.sum(image[:, x]) > 0 and not l:
-            l = x
-        if np.sum(image[:, image.shape[1] - x - 1]) > 0 and r == image.shape[1]-1:
-            r = image.shape[1] - x
+        out = self.cv_image.copy()
+        out = cv2.bitwise_and(out ,out, mask=cv2.inRange(
+            cv2.cvtColor(out, cv2.COLOR_RGB2HSV),
+            self.mask_b,
+            self.mask_t))
+        return cv2.morphologyEx(out, cv2.MORPH_OPEN, np.array([[1]*self.n]*self.n))
 
-    return t, b, l, r
+
+    def get_margin(self, image):
+        step = 3
+
+        t, b, l, r = 0, image.shape[0]-1, 0, image.shape[1]-1
+        for y in range(0, image.shape[0], step):
+            if np.sum(image[y, :]) > 0 and t == 0:
+                t = y
+            if np.sum(image[image.shape[0] - y - 1, :]) > 0 and b == image.shape[0]-1:
+                b = image.shape[0] - y
+
+        for x in range(0, image.shape[1], step):
+            if np.sum(image[:, x]) > 0 and l == 0:
+                l = x
+            if np.sum(image[:, image.shape[1] - x - 1]) > 0 and r == image.shape[1]-1:
+                r = image.shape[1] - x
+
+        return t, b, l, r
+
+
 
 def main(args=None):
     rclpy.init(args=args)

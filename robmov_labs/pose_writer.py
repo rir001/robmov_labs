@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import numpy as np
-from numpy import pi
 np.float = float
 
 import rclpy
@@ -8,6 +7,8 @@ from rclpy.node import Node
 from geometry_msgs.msg import Pose
 
 import matplotlib.pyplot as plt
+
+import cv2
 
 
 ESCALA = 130
@@ -26,11 +27,13 @@ class WriterPose( Node ):
         x = position.position.x * ESCALA
         y = position.position.y * ESCALA
 
-        self.get_logger().info(f'x:{x} y:{y}')
+        # self.get_logger().info(f'x:{x} y:{y}')
 
         self.canvas[500 - int(y), int(x)] = 0
 
-        plt.imsave("name.png", self.canvas)
+        cv2.imshow("rute", self.canvas)
+
+        # plt.imsave("name.png", self.canvas)
 
 
 def main():

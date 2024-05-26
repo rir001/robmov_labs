@@ -8,13 +8,13 @@ from threading import Thread
 from rclpy.node import Node
 from std_msgs.msg import Float64
 from tf_transformations import euler_from_quaternion
-from geometry_msgs.msg import Twist, PoseArray, Pose, Vector3
+from geometry_msgs.msg import Twist, PoseArray, Pose
 
 
-VEL = 0.2            # m/s
+VEL = 0.2
 
-TOLERANCIA_ANG = 0.01
-TOLERANCIA_DESP = 0.01
+TOLERANCIA_DESP = 0.000001
+TOLERANCIA_ANG  = 0.0001
 
 class DeadReckoningNav( Node ):
 
@@ -162,6 +162,8 @@ class DeadReckoningNav( Node ):
                     pose = np.sqrt((self.x - start_x)**2 + (self.y - start_y)**2)
 
                 self.send_setpoint_desp(0.0)
+                self.send_setpoint_desp(0.0)
+                self.send_state_desp(0.0)
                 self.send_state_desp(0.0)
 
             if command[1] != 0:
@@ -174,6 +176,8 @@ class DeadReckoningNav( Node ):
                     pose = dif_calulator(self.w, start_w)
 
                 self.send_setpoint_angle(0.0)
+                self.send_setpoint_angle(0.0)
+                self.send_state_angle(0.0)
                 self.send_state_angle(0.0)
 
 

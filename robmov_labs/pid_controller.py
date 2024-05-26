@@ -3,10 +3,9 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64
-from std_msgs.msg import Empty
 
 
-MODE = "P"
+MODE = "PI"
 
 
 class PIDController( Node ):
@@ -21,9 +20,9 @@ class PIDController( Node ):
         self.state = None
         self.proportional_action = 0
 
-        self.actuation_pub = self.create_publisher( Float64, f'velocity{"_"+name if name else ""}', 1 )
-        self.dist_set_point_sub = self.create_subscription( Float64, f'setpoint{"_"+name if name else ""}', self.setpoint_cb, 1 )
-        self.dist_state_sub = self.create_subscription( Float64, f'state{"_"+name if name else ""}', self.state_cb, 1 )
+        self.actuation_pub =        self.create_publisher( Float64, f'velocity{"_"+name if name else ""}', 1 )
+        self.dist_set_point_sub =   self.create_subscription( Float64, f'setpoint{"_"+name if name else ""}', self.setpoint_cb, 1 )
+        self.dist_state_sub =       self.create_subscription( Float64, f'state{"_"+name if name else ""}', self.state_cb, 1 )
 
     def setpoint_cb( self, msg ):
         self.get_logger().info(f'[PID{"_"+self.name if self.name else ""}] new setpoint received: %.2f' % (msg.data) )
@@ -37,11 +36,12 @@ class PIDController( Node ):
         error = self.setpoint - self.state
 
         p_actuation = self.kp*error
-        i_actuation = self.ki*self.cumulated_error
+        i_actuation = self.ki*sum(self.cumulated_error)
         d_actuation = self.kd*(self.past_error + error)/2 #implementar con tiempo
 
         self.past_error = error
-        self.cumulated_error += error
+        self.cumulated_error.append(error)
+        if len(self.cumulated_error) > 20: self.cumulated_error.pop(0)
 
         actuation = p_actuation + i_actuation + d_actuation
 
@@ -54,14 +54,14 @@ class PIDController( Node ):
         self.setpoint = None
         self.state = None
         self.past_error = 0
-        self.cumulated_error = 0
+        self.cumulated_error = []
 
 def run_pid_desp():
     rclpy.init()
     if MODE == "P":
         pid_desp_ctrl = PIDController( kp=16, name="desp")
     if MODE == "PI":
-        pid_desp_ctrl = PIDController( kp=1.6, ki=0.001, name="desp")
+        pid_desp_ctrl = PIDController( kp=1.6, ki=0.8, name="desp")
     rclpy.spin( pid_desp_ctrl )
 
 def run_pid_angle():
@@ -69,7 +69,7 @@ def run_pid_angle():
     if MODE == "P":
         p_angle_ctrl = PIDController( kp=5.5, name="angle")
     if MODE == "PI":
-        p_angle_ctrl = PIDController( kp=5.5, ki=0.001, name="angle")
+        p_angle_ctrl = PIDController( kp=2, ki=0.05 , name="angle")
     rclpy.spin( p_angle_ctrl  )
 
 def main():
