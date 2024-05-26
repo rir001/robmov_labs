@@ -7,6 +7,8 @@ from rclpy.node import Node
 from tf_transformations import quaternion_from_euler
 from geometry_msgs.msg import PoseArray, Pose, Point, Quaternion
 
+from time import sleep
+
 
 class PoseLoader(Node):
 
@@ -14,12 +16,14 @@ class PoseLoader(Node):
         super().__init__('pose_loader')
         self.poses = self.read_file()
         self.publisher = self.create_publisher(PoseArray, 'goal_list', 10)
+        sleep(2)
         self.timer = self.create_timer(0.1, self.publish_poses)
         self.flag = True
 
 
     def publish_poses(self):
         if self.publisher.get_subscription_count() > 0 and self.flag:
+            self.get_logger().info('Published poses')
             msg = PoseArray()
             msg.poses = self.poses
             self.publisher.publish(msg)
@@ -29,7 +33,7 @@ class PoseLoader(Node):
 
     def read_file(self):
         poses = []
-        name = 'cuadrado'
+        name = 'estrella'
         with open(f'src/robmov_labs/text/{name}.txt', 'r') as file:
             for line in file:
                 x, y, theta = line.strip().replace("pi", str(np.pi)).split(',')
