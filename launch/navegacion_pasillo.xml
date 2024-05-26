@@ -1,3 +1,18 @@
 <launch>
+    <!-- <include file="$(find-pkg-share very_simple_robot_simulator)/launch/minimal_simulator_py.xml" />
+    <include file="$(find-pkg-share very_simple_robot_simulator)/launch/openni_simulator.xml" />
+    <node pkg="very_simple_robot_simulator" name="world_state_gui" exec="world_state_gui.py" output="screen" >
+        <param name="map_file" value="$(find-pkg-share robmov_labs)/maps/pasillo.yaml" />
+    </node> -->
+
+    <include file="$(find-pkg-share very_simple_robot_simulator)/launch/run_all.xml" />
+
+
+    <include file="$(find-pkg-share robmov_labs)/dead_reckoning.xml" />
+
+    <include file="$(find-pkg-share robmov_labs)/pid_controller.xml" />
+    <include file="$(find-pkg-share robmov_labs)/pose_loader.xml" />
+
+    <!-- <include file="$(find-pkg-share robmov_labs)/pose_writer.xml" /> -->
 
 </launch>
