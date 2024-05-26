@@ -35,6 +35,7 @@ class PasilloNav( Node ):
         self.bg = CvBridge()
 
         self.send_setpoint_angle(320.0)
+        self.x = 320.0
 
 
 
@@ -64,32 +65,28 @@ class PasilloNav( Node ):
         cv_image = self.bg.imgmsg_to_cv2(image, desired_encoding='passthrough')
         cv_image = np.nan_to_num(np.array(cv_image))
 
-        line = cv_image[200, :]
+        self.logic(cv_image[200, :])
 
-        x = np.sum(line * (line > np.max(line)/3) * np.arange(1, 641)) / (640)
-        x = min(639.0, max(0.0, x))
-
-
-
-        if   line[416] < 0.5:
-            self.set_velocity_desp(0.0)
-            self.send_state_angle(213.0)
-        elif line[213] < 0.5:
-            self.set_velocity_desp(0.0)
-            self.send_state_angle(426.0)
-        elif line[int(x)] < 0.5:
-            self.set_velocity_desp(0.0)
-            self.send_state_angle(x)
-        else:
-            self.set_velocity_desp(0.2)
-            self.send_state_angle(x)
-
-
-
-        cv_image[:, int(x)] = 0
+        cv_image[:, int(self.x)] = 0
         cv2.imshow("camera", cv_image)
         cv2.waitKey(1)
 
+    def logic(self, line):
+
+        self.x = min(639.0, max(0.0, np.sum(line * (line > np.max(line)/3) * np.arange(1, 641)) / (640)))
+
+        if   np.min(line[416:]) < 0.5:
+            self.set_velocity_desp(0.0)
+            self.send_state_angle(0.0)
+        elif np.min(line[:213]) < 0.5:
+            self.set_velocity_desp(0.0)
+            self.send_state_angle(650.0)
+        elif line[int(self.x)] < 0.5:
+            self.set_velocity_desp(0.0)
+            self.send_state_angle(self.x)
+        else:
+            self.set_velocity_desp(0.2)
+            self.send_state_angle(self.x)
 
 
 def main():
