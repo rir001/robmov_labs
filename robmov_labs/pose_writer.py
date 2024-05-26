@@ -6,8 +6,6 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Pose
 
-import matplotlib.pyplot as plt
-
 import cv2
 
 
@@ -31,9 +29,8 @@ class WriterPose( Node ):
 
         self.canvas[500 - int(y), int(x)] = 0
 
-        cv2.imshow("rute", self.canvas)
-
-        # plt.imsave("name.png", self.canvas)
+        cv2.imshow("ruta", self.canvas)
+        cv2.waitKey(1)
 
 
 def main():
