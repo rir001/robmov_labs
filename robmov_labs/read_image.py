@@ -8,27 +8,32 @@ from rclpy.node import Node
 from threading import Thread
 from std_msgs.msg import Float64
 from sensor_msgs.msg import Image
+from geometry_msgs.msg import Twist
 
 from cv_bridge import CvBridge
 import matplotlib.pyplot as plt
 
+
+VEL = 1.0
 
 
 class ReadImage( Node ):
 
     def __init__( self ):
         super().__init__( 'image_reader' )
-        self.n = 0
         self.bg = CvBridge()
-        self.kinect_image_sub   = self.create_subscription( Image, '/kinect/image_raw', self.image_reader, 10 )
-        self.position_pub       = self.create_publisher( Float64, '/blue_position', 10 )
+        self.kinect_image_sub   = self.create_subscription( Image, '/kinect/image_raw', self.image_reader, 1 )
+        self.position_pub       = self.create_publisher( Twist, '/commands/velocity', 1 )
 
         self.get_logger().info( "image_reader: ON" )
 
+        self.speed = Twist()
+
         self.mask = None
-        self.mask_b = np.array([ 83, 130, 149])
-        self.mask_t = np.array([128, 256, 256])
-        self.n = 8
+        self.ready = 0
+        self.mask_b = np.array([103, 106,  84])
+        self.mask_t = np.array([126, 255, 255])
+        self.n = 20
 
 
     def image_reader(self, image):
@@ -36,14 +41,42 @@ class ReadImage( Node ):
         self.cv_image = np.array(cv_image)
 
         if not self.mask:
+        # if 0:
             self.thread_filter_selector()
-        else:
-            t, b, l, r = self.get_margin(self.filter_image())
-            # plt.imsave(f"sas.png", self.cv_image[t:b, l:r])
-            msg = Float64()
-            msg.data = (l + r)/2
-            self.position_pub.publish( msg )
+        elif self.ready:
+            image_ = self.filter_image()
+            cv2.imshow("sas", image_[:, ::-1])
+            cv2.waitKey(1)
 
+            t, b, l, r = self.get_margin(image_)
+            # plt.imsave(f"sas.png", self.cv_image[t:b, l:r])
+
+            x = (l + r)/2
+            area = ((t + b)/2) * ((l + r)/2)
+
+            self.get_logger().info( f'pose: {x}' )
+
+            if [t, b, l, r] == [0, image_.shape[0]-1, 0, image_.shape[1]-1]:
+                self.set_velocity_angle(1.0)
+                self.set_velocity_desp(0.0)
+            elif   x < 280:
+                self.set_velocity_angle( 1.0 * ( 1.5 - (x / 280) ))
+                self.set_velocity_desp(0.0)
+            elif x > 360 :
+                self.set_velocity_angle(-1.0 * ( 1.5 - ((x-360) / 280)) )
+                self.set_velocity_desp(0.0)
+            else:
+                self.set_velocity_angle(0.0)
+                self.set_velocity_desp(0.3 * (1.5 - (area / 300_000)))
+
+
+    def set_velocity_angle(self, vel):
+        self.speed.angular.z = min(vel, VEL) if vel > 0 else max(vel, -VEL)
+        self.position_pub.publish(self.speed)
+
+    def set_velocity_desp(self, vel):
+        self.speed.linear.x = min(vel, VEL) if vel > 0 else max(vel, -VEL)
+        self.position_pub.publish(self.speed)
 
     def thread_filter_selector(self):
         self.mask = 1
@@ -61,8 +94,8 @@ class ReadImage( Node ):
         cv2.createTrackbar('V_b'   , windowName, self.mask_b[2], 255, lambda x: None)
         cv2.createTrackbar('V_t'   , windowName, self.mask_t[2], 255, lambda x: None)
 
-        cv2.createTrackbar('mask'  , windowName,   1,  20, lambda x: None)
-        cv2.setTrackbarMin('mask'  , windowName,   1)
+        cv2.createTrackbar('mask'  , windowName, self.n,  20, lambda x: None)
+        cv2.setTrackbarMin('mask'  , windowName, 1)
 
         out = self.cv_image.copy()
 
@@ -89,10 +122,11 @@ class ReadImage( Node ):
             out = cv2.morphologyEx(out, cv2.MORPH_OPEN, np.array([[1]*self.n]*self.n))
 
         cv2.destroyAllWindows()
+        self.ready = 1
 
 
     def filter_image(self):
-        plt.imsave(f"sus.png", self.cv_image)
+        # plt.imsave(f"sus.png", self.cv_image)
 
         out = self.cv_image.copy()
         out = cv2.bitwise_and(out ,out, mask=cv2.inRange(
