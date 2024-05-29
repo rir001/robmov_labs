@@ -69,10 +69,13 @@ class DeadReckoningNav( Node ):
 
     def set_velocity_desp(self, vel):
         self.speed.linear.x = min(vel.data, VEL) if vel.data > 0 else max(vel.data, -VEL)
+        self.cmd_vel_mux_pub.publish(self.speed)
         self.state[0].append(self.state[0][-1])
         self.setpoint[0].append(self.setpoint[0][-1])
         self.velocity[0].append(self.speed.linear.x)
-        self.cmd_vel_mux_pub.publish(self.speed)
+        self.state[1].append(self.state[1][-1])
+        self.setpoint[1].append(self.setpoint[1][-1])
+        self.velocity[1].append(self.speed.angular.z)
 
     def velocity_angle_sub_thread(self, vel):
         thread = Thread(target=self.set_velocity_angle, args=(vel,))
@@ -80,45 +83,60 @@ class DeadReckoningNav( Node ):
 
     def set_velocity_angle(self, vel):
         self.speed.angular.z = min(vel.data, VEL) if vel.data > 0 else max(vel.data, -VEL)
+        self.cmd_vel_mux_pub.publish(self.speed)
+        self.state[0].append(self.state[0][-1])
+        self.setpoint[0].append(self.setpoint[0][-1])
+        self.velocity[0].append(self.speed.linear.x)
         self.state[1].append(self.state[1][-1])
         self.setpoint[1].append(self.setpoint[1][-1])
         self.velocity[1].append(self.speed.angular.z)
-        self.cmd_vel_mux_pub.publish(self.speed)
 
     def send_setpoint_desp(self, data):
         msg = Float64()
         msg.data = data
+        self.setpoint_desp_pub.publish( msg )
         self.state[0].append(self.state[0][-1])
         self.setpoint[0].append(data)
         self.velocity[0].append(self.speed.linear.x)
-        self.setpoint_desp_pub.publish( msg )
+        self.state[1].append(self.state[1][-1])
+        self.setpoint[1].append(self.setpoint[1][-1])
+        self.velocity[1].append(self.speed.angular.z)
         # self.get_logger().info( 'send displacement target: %.4f' % ( data ) )
 
     def send_setpoint_angle(self, data):
         msg = Float64()
         msg.data = data
+        self.setpoint_angle_pub.publish( msg )
+        self.state[0].append(self.state[0][-1])
+        self.setpoint[0].append(self.setpoint[0][-1])
+        self.velocity[0].append(self.speed.linear.x)
         self.state[1].append(self.state[1][-1])
         self.setpoint[1].append(data)
         self.velocity[1].append(self.speed.angular.z)
-        self.setpoint_angle_pub.publish( msg )
         # self.get_logger().info( 'send angle target: %.4f' % ( data ) )
 
     def send_state_desp(self, data):
         msg = Float64()
         msg.data = data
+        self.state_desp_pub.publish( msg )
         self.state[0].append(data)
         self.setpoint[0].append(self.setpoint[0][-1])
         self.velocity[0].append(self.speed.linear.x)
-        self.state_desp_pub.publish( msg )
+        self.state[1].append(self.state[1][-1])
+        self.setpoint[1].append(self.setpoint[1][-1])
+        self.velocity[1].append(self.speed.angular.z)
         # self.get_logger().info( 'send actual displacement: %.4f' % ( data ) )
 
     def send_state_angle(self, data):
         msg = Float64()
         msg.data = data
+        self.state_angle_pub.publish( msg )
+        self.state[0].append(self.state[0][-1])
+        self.setpoint[0].append(self.setpoint[0][-1])
+        self.velocity[0].append(self.speed.linear.x)
         self.state[1].append(data)
         self.setpoint[1].append(self.setpoint[1][-1])
         self.velocity[1].append(self.speed.angular.z)
-        self.state_angle_pub.publish( msg )
         # self.get_logger().info( 'send actual angle: %.4f' % ( data ) )
 
     def real_pose_loader(self, position):
@@ -212,6 +230,10 @@ class DeadReckoningNav( Node ):
 
                 self.send_setpoint_desp(0.0)
                 self.send_state_desp(0.0)
+                self.send_setpoint_desp(0.0)
+                self.send_state_desp(0.0)
+                self.send_setpoint_desp(0.0)
+                self.send_state_desp(0.0)
                 sleep(0.1)
 
             if command[1] != 0:
@@ -223,6 +245,10 @@ class DeadReckoningNav( Node ):
                     self.send_state_angle(pose)
                     pose = dif_calulator(self.w, start_w)
 
+                self.send_setpoint_angle(0.0)
+                self.send_state_angle(0.0)
+                self.send_setpoint_angle(0.0)
+                self.send_state_angle(0.0)
                 self.send_setpoint_angle(0.0)
                 self.send_state_angle(0.0)
                 sleep(0.1)

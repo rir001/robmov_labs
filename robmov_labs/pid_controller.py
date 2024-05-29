@@ -5,7 +5,7 @@ from rclpy.node import Node
 from std_msgs.msg import Float64
 
 
-MODE = "PI"
+MODE = "P"
 
 
 class PIDController( Node ):
@@ -59,7 +59,7 @@ class PIDController( Node ):
 def run_pid_desp():
     rclpy.init()
     if MODE == "P":
-        pid_desp_ctrl = PIDController( kp=16, name="desp")
+        pid_desp_ctrl = PIDController( kp=8, name="desp")
     if MODE == "PI":
         pid_desp_ctrl = PIDController( kp=1.6, ki=0.8, name="desp")
     rclpy.spin( pid_desp_ctrl )
@@ -69,7 +69,7 @@ def run_pid_angle():
     if MODE == "P":
         p_angle_ctrl = PIDController( kp=5.5, name="angle")
     if MODE == "PI":
-        p_angle_ctrl = PIDController( kp=2, ki=0.05 , name="angle")
+        p_angle_ctrl = PIDController( kp=2, ki=0.1 , name="angle")
     rclpy.spin( p_angle_ctrl  )
 
 def main():
