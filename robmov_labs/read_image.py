@@ -60,14 +60,14 @@ class ReadImage( Node ):
                 self.set_velocity_angle(1.0)
                 self.set_velocity_desp(0.0)
             elif   x < 280:
-                self.set_velocity_angle( 1.0 * ( 1.5 - (x / 280) ))
+                self.set_velocity_angle( 1.2)
                 self.set_velocity_desp(0.0)
             elif x > 360 :
-                self.set_velocity_angle(-1.0 * ( 1.5 - ((x-360) / 280)) )
+                self.set_velocity_angle(-1.2)
                 self.set_velocity_desp(0.0)
             else:
                 self.set_velocity_angle(0.0)
-                self.set_velocity_desp(0.3 * (1.5 - (area / 300_000)))
+                self.set_velocity_desp(0.2 * (1.5 - (area / 300_000)))
 
 
     def set_velocity_angle(self, vel):
