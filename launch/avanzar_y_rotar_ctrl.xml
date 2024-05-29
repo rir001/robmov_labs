@@ -9,7 +9,6 @@
 
     <include file="$(find-pkg-share robmov_labs)/pose_writer.xml" />
 
-    <!-- <include file="$(find-pkg-share robmov_labs)/ploter.xml" /> -->
 
 
 </launch>
