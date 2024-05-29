@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="robmov_labs" exec="ploter_desp" name="ploter_desp"/>
+    <node pkg="robmov_labs" exec="ploter_angle" name="ploter_angle"/>
+</launch>

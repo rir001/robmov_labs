@@ -32,6 +32,8 @@ setup(
             'pose_writer            = robmov_labs.pose_writer:main',
             'nav_pasillo            = robmov_labs.navegacion_pasillos:main',
             'read_image             = robmov_labs.read_image:main',
+            'ploter_angle             = robmov_labs.ploter:plot_angle',
+            'ploter_desp             = robmov_labs.ploter:plot_desp',
         ],
     },
 )
