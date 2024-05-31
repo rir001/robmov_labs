@@ -33,7 +33,7 @@ class PoseLoader(Node):
 
     def read_file(self):
         poses = []
-        name = 'cuadra2'
+        name = 'estrella'
         with open(f'src/robmov_labs/text/{name}.txt', 'r') as file:
             for line in file:
                 x, y, theta = line.strip().replace("pi", str(np.pi)).split(',')

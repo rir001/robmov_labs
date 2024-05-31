@@ -5,7 +5,7 @@ from rclpy.node import Node
 from std_msgs.msg import Float64
 
 
-MODE = "P"
+MODE = "PI"
 
 
 class PIDController( Node ):
