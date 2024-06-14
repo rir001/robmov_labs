@@ -1,8 +1,5 @@
 <launch>
-
   <!--<node pkg="robmov_labs" exec="pid_controller" name="pid_controller" namespace="lalala" output="screen" />-->
   <node pkg="robmov_labs" exec="pid_angle" name="pid_angle" output="screen" />
   <node pkg="robmov_labs" exec="pid_desp"  name="pid_desp"  output="screen" />
-
 </launch>
-

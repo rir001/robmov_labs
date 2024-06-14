@@ -1,3 +1,0 @@
-<launch>
-    <node pkg="robmov_labs" exec="obstacle_detector" name="obstacle_detector"/>
-</launch>

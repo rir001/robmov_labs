@@ -32,6 +32,7 @@ setup(
             'pose_writer            = robmov_labs.pose_writer:main',
             'nav_pasillo            = robmov_labs.navegacion_pasillos:main',
             'read_image             = robmov_labs.read_image:main',
+            'localization           = robmov_labs.localization:main',
         ],
     },
 )
