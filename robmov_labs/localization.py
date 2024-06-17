@@ -26,8 +26,7 @@ class PasilloNav( Node ):
 
         self.ploted = False
 
-        # self.camera_sub                 = self.create_subscription( Image, '/camera/depth/image_raw',       self.show_camera,   1 )
-        self.lidar_sub                  = self.create_subscription( LaserScan, '/scan',    self.show_lidar,    1 )
+        self.lidar_sub                  = self.create_subscription( LaserScan, '/scan',                 self.proces_lidar,  1 )
         self.cmd_vel_mux_pub            = self.create_publisher( Twist, '/cmd_vel_mux/input/navigation', 10 )
 
         self.bg = CvBridge()
@@ -61,6 +60,10 @@ class PasilloNav( Node ):
             self.line.set_ydata(image.ranges)
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
+            self.get_logger().info( f"{ image.ranges }" )
+
+    def proces_lidar(self, image):
+        self.show_lidar(image)
 
 
 
