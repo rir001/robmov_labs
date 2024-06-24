@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find-pkg-share robmov_labs)/localization.xml" />
+
+    <node pkg="robmov_labs"  exec="read_map"  name="read_map" />
+</launch>

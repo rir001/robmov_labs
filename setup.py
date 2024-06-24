@@ -33,6 +33,7 @@ setup(
             'nav_pasillo            = robmov_labs.navegacion_pasillos:main',
             'read_image             = robmov_labs.read_image:main',
             'localization           = robmov_labs.localization:main',
+            'read_map               = robmov_labs.read_map:main',
         ],
     },
 )
