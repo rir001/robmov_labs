@@ -84,7 +84,7 @@ class Localization( Node ):
 
         self.lidar_sub          = self.create_subscription( LaserScan, '/scan', self.process_lidar,  1 )
         self.cmd_vel_mux_pub    = self.create_publisher( Twist, '/cmd_vel_mux/input/navigation', 10 )
-        self.particle_pub       = self.create_publisher( PoseArray, 'particles', 1 )
+        self.particle_pub       = self.create_publisher( PoseArray, '/particles', 1 )
 
         self.bg = CvBridge()
 
@@ -121,10 +121,11 @@ class Localization( Node ):
         for p in particles:
             q = quaternion_from_euler(0, 0, p[2])
             poses.append(Pose(
-                position = Point(x=float(p[0]/SCALE), y=float(p[1]/SCALE), z=float(0)),
+                position = Point(x=float(p[1]/SCALE), y=float((270 - p[0])/SCALE), z=float(0)),
                 orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
             ))
         msg = PoseArray()
+        msg.header.frame_id = "map"
         msg.poses = poses
         self.particle_pub.publish(msg)
 
