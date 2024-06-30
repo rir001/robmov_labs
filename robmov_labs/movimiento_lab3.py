@@ -9,8 +9,7 @@ from rclpy.node import Node
 from std_msgs.msg import Float64
 from tf_transformations import euler_from_quaternion
 from geometry_msgs.msg import Twist, PoseArray, Pose
-from sensor_msgs.msg import Image, LaserScan
-from cv_bridge import CvBridge
+from sensor_msgs.msg import LaserScan
 
 
 VEL = 0.4
@@ -54,38 +53,38 @@ class Lab3_Nav( Node ):
     def __init__( self ):
         super().__init__( 'movimiento_lab3' )
 
-        self.camera_sub                 = self.create_subscription( Image, '/camera/depth/image_raw', self.camera_cb, 1 )
         self.cmd_vel_mux_pub            = self.create_publisher( Twist, '/cmd_vel_mux/input/navigation', 10 )
         self.lidar_sub                  = self.create_subscription( LaserScan, '/scan', self.lidar_cb, 1 )
         self.particles_filter_sub       = self.create_subscription( PoseArray, '/particles', self.pf_cb, 1 )
         self.particles_filter_pub       = self.create_publisher( PoseArray, '/moved_particles', 1 )
 
         self.speed = Twist()
-        self.bg = CvBridge()
 
         self.angles = []
         self.prev_selected_angle = 0
         self.x = 320.0
+        self.rango = np.arange(-np.pi/2, np.pi/2, step=0.01745329238474369)
 
 
     
     def lidar_cb(self, image):
-        # self.get_logger().info(f'image.ranges: {list(image.ranges)}')
+        self.get_logger().info(f'image.ranges: {list(image.ranges)}')
         muestra = list(image.ranges)
         points = [(0, 0)]
-        start_angle = -np.pi/2
-        final_angle =  np.pi/2
-        step = 0.01745329238474369
-
-        rango = np.arange(start_angle, final_angle, step)
-
+        front_points = []
+        
         for n in range(62, 119):
+            if 81 <= n <= 100:
+                front_points.append(muestra[n])
             if muestra[n] == 4.0: continue
 
-            x = muestra[n]*np.cos(rango[n])
-            y = muestra[n]*np.sin(rango[n])
+            x = muestra[n]*np.cos(self.rango[n])
+            y = muestra[n]*np.sin(self.rango[n])
 
             points.append((x, y))
+        
+        self.distance_from_wall = np.mean(front_points)
+
 
         h = get_aprox_image_angles(points)
         aprox_angle = find_more_common_angle(h)
@@ -95,7 +94,7 @@ class Lab3_Nav( Node ):
             self.angles.pop(0)
         self.angles.append(precise_angle)
 
-        self.get_logger().info(f'angle: {precise_angle}')
+        # self.get_logger().info(f'angle: {precise_angle}')
 
 
     def pf_cb(self, msg):
@@ -146,24 +145,6 @@ class Lab3_Nav( Node ):
         new_particles = PoseArray()
         new_particles.header = msg.header
     
-
-    def camera_cb(self, image):
-        cv_image = self.bg.imgmsg_to_cv2(image, desired_encoding='passthrough')
-        cv_image = np.nan_to_num(np.array(cv_image))
-
-        self.logic(cv_image[200, :])
-
-        cv_image[:, int(self.x)] = 0
-        cv2.imshow("camera", cv_image)
-        cv2.waitKey(1)
-    
-    def logic(self, line):
-        '''
-        Nos indica que tan cerca estamos de una pared
-        '''
-
-        self.x = min(639.0, max(0.0, np.sum(line * (line > np.max(line)/3) * np.arange(1, 641)) / (640)))
-        # Preguntar a Rir como funcionaba logic en navegavion_pasillos.py
 
         
     
