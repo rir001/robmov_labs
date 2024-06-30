@@ -6,6 +6,7 @@
     </node>
 
     <node pkg="robmov_labs" exec="pid"  name="pid" />
+    
 
     <node pkg="robmov_labs" exec="nav_pasillo"  name="nav_pasillo" />
 

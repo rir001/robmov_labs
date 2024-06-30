@@ -1,5 +1,17 @@
 <launch>
-    <include file="$(find-pkg-share robmov_labs)/localization.xml" />
+    <!-- <include file="$(find-pkg-share robmov_labs)/localization.xml" />
+    <node pkg="robmov_labs"  exec="read_map"  name="read_map" /> -->
 
-    <node pkg="robmov_labs"  exec="read_map"  name="read_map" />
+    <include file="$(find-pkg-share very_simple_robot_simulator)/launch/minimal_simulator_py.xml" />
+    <include file="$(find-pkg-share very_simple_robot_simulator)/launch/openni_simulator.xml" />
+    <include file="$(find-pkg-share very_simple_robot_simulator)/launch/lidar_simulator.xml" />
+    <node pkg="very_simple_robot_simulator" name="world_state_gui" exec="world_state_gui.py" output="screen" >
+        <param name="map_file" value="$(find-pkg-share robmov_labs)/mapa.yaml" />
+    </node>
+
+    <!-- Lab 3:  -->
+    <node pkg="robmov_labs"  exec="localization"  name="localization"  />
+    <node pkg="robmov_labs" exec="movimiento_lab3"  name="movimiento_lab3" />
+
+
 </launch>
