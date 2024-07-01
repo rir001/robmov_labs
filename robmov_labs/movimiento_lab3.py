@@ -121,7 +121,7 @@ class Lab3_Nav( Node ):
             self.acciones.append(accion)
 
         # self.get_logger().info(f'distancias: {distancias}, distancia: {self.distancia}')
-        self.get_logger().info(f'acciones: {self.acciones}, accion: {accion}')
+        # self.get_logger().info(f'acciones: {self.acciones}, accion: {accion}')
 
         # Ángulo
         h = get_aprox_image_angles(points)

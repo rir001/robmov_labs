@@ -36,6 +36,37 @@ maskm_map = (np.logical_not(REAL_MAP).astype(np.uint8) * maskm_map / 255).astype
 DARK_MAP = cv2.dilate(maskm_map, np.ones([3]*2, np.uint8), iterations=1)
 
 
+def blur_image(image, kernel_size):
+
+    n = kernel_size
+    sigma = n/3
+    array = np.arange(n) + 1
+    kernel = np.exp(-((array ** 2 ) / (2.0 * sigma ** 2)))
+    A = np.ones(image.shape)
+
+    final = image.copy()*A
+    dilatada = image.copy()
+
+
+    for i in range(n):
+
+        dilatada_a = dilatada.copy()
+        dilatada = cv2.dilate(dilatada, np.ones((3, 3), np.uint8))
+        capa = (dilatada-dilatada_a) * kernel[i] 
+        if i == 0:
+            final += dilatada * kernel[i]
+        final += capa
+
+    return  final
+
+mask = REAL_MAP.copy()
+
+mask[mask == 0] = 255
+mask[mask == 205] = 0
+
+GAUSSIAN_MAP = blur_image(DARK_MAP, 20) * cv2.erode(mask, np.ones([3]*2, np.uint8), iterations=7)
+GAUSSIAN_MAP /= GAUSSIAN_MAP.max()
+
 def get_particles(N:int, points=[], r:int=10, angle_tolerance:int=0.1) -> np.ndarray:
     angles = np.linspace(-np.pi, np.pi, int(360/angle_tolerance))
 
@@ -54,22 +85,15 @@ def get_particles(N:int, points=[], r:int=10, angle_tolerance:int=0.1) -> np.nda
 def get_more_correct_particles(particles:list, muestra:list, tolerance:int=1, umbral:int=3):
     sobrevivientes = []
 
-    for y, x, a in particles:
-        N = 0
-        for n in range(62, 119):
-            y_a = int(y - SCALE*muestra[n]*np.sin(RANGO_ANGULAR[n] + a))
-            x_a = int(x + SCALE*muestra[n]*np.cos(RANGO_ANGULAR[n] + a))
+    step = np.arange(62, 119, 1)
 
-            if 0 < y_a < DARK_MAP.shape[0] and 0 < x_a < DARK_MAP.shape[1]:
-                if np.sum(DARK_MAP[y_a-tolerance:y_a+tolerance+1, x_a-tolerance:x_a+tolerance+1]) == 0:
-                    N += 1
-                    if N > umbral:
-                        break
-            else:
-                N = 70
-                break
-        if N <= umbral:
-            sobrevivientes.append([y, x, a])
+    for y, x, a in particles:
+        y_a = (y - SCALE*muestra[step]*np.sin(RANGO_ANGULAR[step] + a)).astype(int)
+        x_a = (x + SCALE*muestra[step]*np.cos(RANGO_ANGULAR[step] + a)).astype(int)
+
+        if ((15 < y_a) & (y_a < 255) & (15 < x_a-tolerance) & (x_a < 255)).all():
+            if np.product(GAUSSIAN_MAP[y_a, x_a]) > umbral:
+                sobrevivientes.append([y, x, a])
 
     return np.array(sobrevivientes)
 
@@ -84,7 +108,7 @@ class Localization( Node ):
         self.lidar_sub          = self.create_subscription( LaserScan, '/scan', self.process_lidar,  1 )
         self.cmd_vel_mux_pub    = self.create_publisher( Twist, '/cmd_vel_mux/input/navigation', 10 )
         self.particle_pub       = self.create_publisher( PoseArray, '/particles', 1 )
-        self.mvmnt__rdy_sub     = self.create_subscription( PoseArray, '/moved_particles', self.move, 1 )
+        self.mvmnt_rdy_sub     = self.create_subscription( PoseArray, '/moved_particles', self.move, 1 )
 
         self.bg = CvBridge()
         self.wait = False  
@@ -135,12 +159,12 @@ class Localization( Node ):
 
         if not self.wait:
             particles = get_particles(PARTICLES)
-            live_particles = get_more_correct_particles(particles, list(image.ranges), tolerance=3, umbral=5)
+            live_particles = get_more_correct_particles(particles, np.array(image.ranges), umbral=.000001)
             particles = np.vstack([
-                get_particles(int(PARTICLES*0.95), points=live_particles, angle_tolerance=0.001),
-                get_particles(int(PARTICLES*0.05)),
+                get_particles(int(PARTICLES*0.95*10), points=live_particles, angle_tolerance=0.001),
+                get_particles(int(PARTICLES*0.05*10)),
             ])
-            live_particles = get_more_correct_particles(particles, list(image.ranges), tolerance=1, umbral=1)
+            live_particles = get_more_correct_particles(particles, np.array(image.ranges), umbral=.00001)
             self.get_logger().info( f"{ live_particles }" )
             self.publish_particles(live_particles)
 
