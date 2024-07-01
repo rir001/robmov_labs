@@ -9,6 +9,7 @@ from rclpy.node import Node
 from tf_transformations import euler_from_quaternion, quaternion_from_euler
 from geometry_msgs.msg import Twist, PoseArray, Pose, Point, Quaternion
 from sensor_msgs.msg import LaserScan
+from std_msgs.msg import Bool
 
 
 OMEGA = 1.0          # rad/s
@@ -51,7 +52,7 @@ def get_precise_image_angle(lista, aprox_angle):
         if angle < 0: angle += 2*np.pi
         if angle > 2*np.pi: angle -= 2*np.pi
         if round(angle, 1) == aprox_angle: angles.append(angle)
-    
+
     precise_angle = np.round(np.mean(angles),3)
     return precise_angle
 
@@ -62,7 +63,7 @@ def gira(angulo: float):
     '''
     tiempo = abs(float(angulo/OMEGA)*T_AJUSTE)
     return [0.0, OMEGA, tiempo]
-    
+
 def avanza(distancia: float):
     '''
     En base a una distancia, se retorna el comando de avance necesario para que el robot avance esa distancia.
@@ -81,6 +82,7 @@ class Lab3_Nav( Node ):
         self.lidar_sub                  = self.create_subscription( LaserScan, '/scan', self.lidar_cb, 1 )
         self.particles_filter_sub       = self.create_subscription( PoseArray, '/particles', self.pf_cb, 1 )
         self.particles_filter_pub       = self.create_publisher( PoseArray, '/moved_particles', 1 )
+        self.particles_filter_flag      = self.create_publisher( Bool, '/particles_filter_flag', 1 )
 
         self.speed = Twist()
 
@@ -91,14 +93,14 @@ class Lab3_Nav( Node ):
         self.pause_robot = True
         self.timer_period = 0.2 # seconds
 
-    
+
     def lidar_cb(self, image):
         # self.get_logger().info(f'image.ranges: {list(image.ranges)}')
         muestra = list(image.ranges)
         points = [(0, 0)]
         distancias = []
         accion = False
-        
+
         for n in range(CENTER-7, CENTER+7):
             if muestra[n] == 4.0: continue
             x = muestra[n]*np.cos(self.rango[n])
@@ -144,7 +146,7 @@ class Lab3_Nav( Node ):
         Si es que se decide avanzar se chequea la distancia a la pared, si es menor a X se gira 90° a la derecha.
         Sino, se avanza.
         '''
-        # return 
+        # return
         if len(self.angles) > 0:
             proposed_angle = find_more_common_angle(self.angles)
             picked_angles = []
@@ -155,13 +157,13 @@ class Lab3_Nav( Node ):
                     picked_angles.append(angle + 2*np.pi)
                 if proposed_angle - M1 <= angle - 2*np.pi <= proposed_angle + M1:
                     picked_angles.append(angle - 2*np.pi)
-                
+
             if len(picked_angles) > 1:
                 selected_angle = np.mean(picked_angles)
             else:
                 selected_angle = self.angles[-1]
-            
-            self.get_logger().info(f'Selected angle: {selected_angle}, acciones: {self.acciones}')
+
+            # self.get_logger().info(f'Selected angle: {selected_angle}, acciones: {self.acciones}')
             if sum(self.acciones) >= 5:
                 # Avanzamos min(X y la distancia a la pared - 0.15)
                 movement = min(FM, self.distancia - 0.1)
@@ -169,16 +171,16 @@ class Lab3_Nav( Node ):
                 # Nos aseguramos de avanzar y luego actualizamos las particulas
                 if movement < FM:   # En caso de que la distancia sea menor a FM, giramos 90° a la derecha
                     self.speed.linear.x, self.speed.angular.z, execution_time = gira(-np.pi/2)
-                    updated_particles = self.actualizar_particulas(msg.poses, -np.pi/2, 0)
+                    updated_particles = self.actualizar_particulas(msg.poses, np.pi/2, 0)
                 else:
                     self.speed.linear.x, self.speed.angular.z, execution_time = avanza(movement)
                     updated_particles = self.actualizar_particulas(msg.poses, movement, 1)
-                
+
             else:
                 # Giramos hasta estar perpendicular a la pared
                 self.speed.linear.x, self.speed.angular.z, execution_time = gira(selected_angle)
                 updated_particles = self.actualizar_particulas(msg.poses, selected_angle, 0)
-            
+
             # Publicar el movimiento a realizar
             self.pause_robot = False
             self.aplicar_velocidad(execution_time)
@@ -194,20 +196,23 @@ class Lab3_Nav( Node ):
             new_particles.header = msg.header
             new_particles.poses = updated_particles
             self.particles_filter_pub.publish(new_particles)
-    
+            message = Bool()
+            message.data = True
+            self.particles_filter_flag.publish(message)
+
     def aplicar_velocidad(self, t_ejecucion):
         t_inicial = self.get_clock().now().nanoseconds
         t_actual = self.get_clock().now().nanoseconds
         contador = 0
 
-        self.get_logger().info(f'Executing movement for {t_ejecucion} seconds')
+        # self.get_logger().info(f'Executing movement for {t_ejecucion} seconds')
         delta = 0
         while t_actual - t_inicial - delta < t_ejecucion*10**9:
-        
+
             pause = True
             while self.pause_robot:
                 if pause:
-                    self.get_logger().info("Robot paused")
+                    # self.get_logger().info("Robot paused")
                     p_start = self.get_clock().now().nanoseconds
                 pause = False
             if not pause:
@@ -217,16 +222,16 @@ class Lab3_Nav( Node ):
                 if pause:
                     contador += 1
                 self.cmd_vel_mux_pub.publish(self.speed)
-                self.get_logger().info(f'Moving: v={self.speed.linear.x}, w={self.speed.angular.z},     {contador}')
-                
+                # self.get_logger().info(f'Moving: v={self.speed.linear.x}, w={self.speed.angular.z},     {contador}')
+
             t_actual = self.get_clock().now().nanoseconds
-        
-        self.get_logger().info(f'Finished movement')
+
+        # self.get_logger().info(f'Finished movement')
         self.speed.linear.x, self.speed.angular.z = 0.0, 0.0
         self.cmd_vel_mux_pub.publish(self.speed)
         self.pause_robot = True
 
-            
+
     def actualizar_particulas(self, particles, value, movement):
         '''
         Actualiza las particulas según el movimiento que haya sido realizado (avance o giro).
@@ -239,19 +244,23 @@ class Lab3_Nav( Node ):
             x, y = p.position.x, p.position.y
             q = [p.orientation.x, p.orientation.y, p.orientation.z, p.orientation.w]
             _, _, a = euler_from_quaternion(q)
-            if movement:
-                x += value*np.cos(a)
-                y += value*np.sin(a)
-            else:
-                a += value
-            new_q = quaternion_from_euler(0, 0, a)
-            new_particles.append(Pose(
-                position = Point(x=x, y=y, z=float(0)),
-                orientation = Quaternion(x=new_q[0], y=new_q[1], z=new_q[2], w=new_q[3])
-            ))
-        
+            for _ in range(10):
+                x_ = x
+                y_ = y
+                a_ = a
+                if movement:
+                    x_ = x + value*np.cos(a) * (1 + (np.random.random() - 0.5) * 0.4)
+                    y_ = y + value*np.sin(a) * (1 + (np.random.random() - 0.5) * 0.4)
+                else:
+                    a_ = a + value * (1 + (np.random.random() - 0.5) * 0.4)
+                new_q = quaternion_from_euler(0, 0, a_)
+                new_particles.append(Pose(
+                    position = Point(x=x_, y=y_, z=float(0)),
+                    orientation = Quaternion(x=new_q[0], y=new_q[1], z=new_q[2], w=new_q[3])
+                ))
+
         return new_particles
-        
+
 
 
 def main():

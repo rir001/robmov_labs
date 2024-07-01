@@ -11,6 +11,7 @@ from tf_transformations import euler_from_quaternion, quaternion_from_euler
 from geometry_msgs.msg import Twist, PoseArray, Pose, Point, Quaternion
 from sensor_msgs.msg import Image, LaserScan
 from cv_bridge import CvBridge
+from std_msgs.msg import Bool
 
 import cv2
 import matplotlib.pyplot as plt
@@ -52,7 +53,7 @@ def blur_image(image, kernel_size):
 
         dilatada_a = dilatada.copy()
         dilatada = cv2.dilate(dilatada, np.ones((3, 3), np.uint8))
-        capa = (dilatada-dilatada_a) * kernel[i] 
+        capa = (dilatada-dilatada_a) * kernel[i]
         if i == 0:
             final += dilatada * kernel[i]
         final += capa
@@ -105,22 +106,16 @@ class Localization( Node ):
 
         self.ploted = False
 
-        self.lidar_sub          = self.create_subscription( LaserScan, '/scan', self.process_lidar,  1 )
-        self.cmd_vel_mux_pub    = self.create_publisher( Twist, '/cmd_vel_mux/input/navigation', 10 )
-        self.particle_pub       = self.create_publisher( PoseArray, '/particles', 1 )
-        self.mvmnt_rdy_sub     = self.create_subscription( PoseArray, '/moved_particles', self.move, 1 )
+        self.lidar_sub                      = self.create_subscription( LaserScan, '/scan', self.process_lidar,  1 )
+        self.cmd_vel_mux_pub                = self.create_publisher( Twist, '/cmd_vel_mux/input/navigation', 10 )
+        self.particle_pub                   = self.create_publisher( PoseArray, '/particles', 1 )
+        self.mvmnt_rdy_sub                  = self.create_subscription( PoseArray, '/moved_particles', self.move, 1 )
+        self.particles_filter_flag_sub      = self.create_subscription( Bool, '/particles_filter_flag', self.particles_filter_flag, 1 )
 
         self.bg = CvBridge()
-        self.wait = False  
+        self.first = 1
+        self.wait = 0
 
-
-    def show_camera(self, image):
-        self.get_logger().info( "Camera" )
-        cv_camera = self.bg.imgmsg_to_cv2(image, desired_encoding='passthrough')
-        cv_camera = np.nan_to_num(np.array(cv_camera))
-
-        cv2.imshow("camera", cv_camera)
-        cv2.waitKey(1)
 
     def load_plot(self, rango):
         plt.ion()
@@ -157,23 +152,49 @@ class Localization( Node ):
     def process_lidar(self, image):
         if PLOT: self.show_lidar(image)
 
-        if not self.wait:
+        if self.first:
             particles = get_particles(PARTICLES)
             live_particles = get_more_correct_particles(particles, np.array(image.ranges), umbral=.000001)
             particles = np.vstack([
-                get_particles(int(PARTICLES*0.95*10), points=live_particles, angle_tolerance=0.001),
-                get_particles(int(PARTICLES*0.05*10)),
+                get_particles(int(PARTICLES*0.95), points=live_particles, angle_tolerance=0.001),
+                get_particles(int(PARTICLES*0.05)),
             ])
             live_particles = get_more_correct_particles(particles, np.array(image.ranges), umbral=.00001)
-            self.get_logger().info( f"{ live_particles }" )
+            # self.get_logger().info( f"{ live_particles }" )
             self.publish_particles(live_particles)
+            self.first = False
+        else:
+            if self.wait:
+                # self.get_logger().info(f"particulas: { self.new_particles }")
+                particles = np.vstack([
+                    get_particles(int(PARTICLES*0.95), points=self.new_particles),
+                    # get_particles(int(PARTICLES*0.05)),
+                ])
+                live_particles = get_more_correct_particles(particles, np.array(image.ranges), umbral=.000001)
+                # self.get_logger().info( f"{ live_particles }" )
+                self.publish_particles(live_particles)
+                if len(live_particles) < 10:
+                    self.get_logger().info(f"Estoy en Y:{ (np.mean(live_particles[0])/SCALE) }, X:{ (np.mean(live_particles[1])/SCALE) }")
+                    self.get_logger().info(f"Con un angulo: { (np.mean(live_particles[2])) }")
+                self.wait = False
 
-            self.wait = True
+
+            # self.wait = True
+    def particles_filter_flag(self, msg):
+        self.wait = msg.data
 
     def move(self, particles):
-        self.get_logger().info( "Move" )
+        # self.get_logger().info( "Move" )
         # self.get_logger().info( f"{ particles }" )
-        self.wait = False
+
+        new_particles = []
+        for p in particles.poses:
+            x, y = p.position.x, p.position.y
+            q = [p.orientation.x, p.orientation.y, p.orientation.z, p.orientation.w]
+            _, _, a = euler_from_quaternion(q)
+            new_particles.append([270 - y*SCALE, x*SCALE, a])
+        self.new_particles = np.array(new_particles)
+
 
 
 
