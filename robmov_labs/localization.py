@@ -81,12 +81,13 @@ class Localization( Node ):
 
         self.ploted = False
 
-
         self.lidar_sub          = self.create_subscription( LaserScan, '/scan', self.process_lidar,  1 )
         self.cmd_vel_mux_pub    = self.create_publisher( Twist, '/cmd_vel_mux/input/navigation', 10 )
         self.particle_pub       = self.create_publisher( PoseArray, '/particles', 1 )
+        self.mvmnt__rdy_sub     = self.create_subscription( PoseArray, '/moved_particles', self.move, 1 )
 
         self.bg = CvBridge()
+        self.wait = False  
 
 
     def show_camera(self, image):
@@ -129,22 +130,26 @@ class Localization( Node ):
         msg.poses = poses
         self.particle_pub.publish(msg)
 
-
     def process_lidar(self, image):
         if PLOT: self.show_lidar(image)
 
-        particles = get_particles(PARTICLES)
-        live_particles = get_more_correct_particles(particles, list(image.ranges), tolerance=3, umbral=5)
-        particles = np.vstack([
-            get_particles(int(PARTICLES*0.95), points=live_particles, angle_tolerance=0.001),
-            get_particles(int(PARTICLES*0.05)),
-        ])
-        live_particles = get_more_correct_particles(particles, list(image.ranges), tolerance=1, umbral=1)
-        self.get_logger().info( f"{ live_particles }" )
-        self.publish_particles(live_particles)
+        if not self.wait:
+            particles = get_particles(PARTICLES)
+            live_particles = get_more_correct_particles(particles, list(image.ranges), tolerance=3, umbral=5)
+            particles = np.vstack([
+                get_particles(int(PARTICLES*0.95), points=live_particles, angle_tolerance=0.001),
+                get_particles(int(PARTICLES*0.05)),
+            ])
+            live_particles = get_more_correct_particles(particles, list(image.ranges), tolerance=1, umbral=1)
+            self.get_logger().info( f"{ live_particles }" )
+            self.publish_particles(live_particles)
 
+            self.wait = True
 
-
+    def move(self, particles):
+        self.get_logger().info( "Move" )
+        # self.get_logger().info( f"{ particles }" )
+        self.wait = False
 
 
 
