@@ -161,21 +161,28 @@ class Localization( Node ):
             ])
             live_particles = get_more_correct_particles(particles, np.array(image.ranges), umbral=.00001)
             # self.get_logger().info( f"{ live_particles }" )
+
             self.publish_particles(live_particles)
             self.first = False
         else:
             if self.wait:
                 # self.get_logger().info(f"particulas: { self.new_particles }")
                 particles = np.vstack([
-                    get_particles(int(PARTICLES*0.95), points=self.new_particles),
-                    # get_particles(int(PARTICLES*0.05)),
+                    get_particles(int(PARTICLES*0.99), points=self.new_particles),
+                    get_particles(int(PARTICLES*0.01)),
                 ])
                 live_particles = get_more_correct_particles(particles, np.array(image.ranges), umbral=.000001)
                 # self.get_logger().info( f"{ live_particles }" )
                 self.publish_particles(live_particles)
-                if len(live_particles) < 10:
-                    self.get_logger().info(f"Estoy en Y:{ (np.mean(live_particles[0])/SCALE) }, X:{ (np.mean(live_particles[1])/SCALE) }")
-                    self.get_logger().info(f"Con un angulo: { (np.mean(live_particles[2])) }")
+                if 0 < len(live_particles) < 10:
+                    # self.get_logger().info(f" {live_particles} ")
+                    # self.get_logger().info(f" {live_particles.shape} ")
+                    # if len(live_particles) == 1:
+                    #     self.get_logger().info(f"Estoy en Y:{ (live_particles[0][0])/SCALE }, X:{ (live_particles[0][1])/SCALE }")
+                    #     self.get_logger().info(f"Con un angulo: { (live_particles[0][:, 2]) }")
+                    # else:
+                    self.get_logger().info(f"Estoy en Y:{ (np.mean(live_particles[:, 0])/SCALE) }, X:{ (np.mean(live_particles[:, 1])/SCALE) }")
+                    self.get_logger().info(f"Con un angulo: { (np.mean(live_particles[:, 2])) }")
                 self.wait = False
 
 

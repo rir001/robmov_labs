@@ -2,7 +2,29 @@
     <!-- <include file="$(find-pkg-share robmov_labs)/localization.xml" />
     <node pkg="robmov_labs"  exec="read_map"  name="read_map" /> -->
 
-    <include file="$(find-pkg-share very_simple_robot_simulator)/launch/minimal_simulator_py.xml" />
+    <!-- <include file="$(find-pkg-share very_simple_robot_simulator)/launch/minimal_simulator_py.xml" /> -->
+
+    <arg name="initial_x" default="0.5" />
+    <arg name="initial_y" default="0.5" />
+    <arg name="initial_yaw" default="0.0" />
+
+    <group>
+        <push_ros_namespace namespace="cmd_vel_mux"/>
+        <include file="$(find-pkg-share cmd_vel_mux)/launch/cmd_vel_mux-launch.py" />
+    </group>
+
+    <node pkg="very_simple_robot_simulator" name="kobuki_simulator" exec="kobuki_simulator.py" output="screen" >
+        <remap from="/cmd_vel" to="/cmd_vel_mux/cmd_vel" />
+        <remap from="/active" to="/cmd_vel_mux/active" />
+        <param name="initial_x" value="$(var initial_x)" />
+        <param name="initial_y" value="$(var initial_y)" />
+        <param name="initial_yaw" value="$(var initial_yaw)" />
+    </node>
+
+
+
+
+
     <include file="$(find-pkg-share very_simple_robot_simulator)/launch/openni_simulator.xml" />
     <include file="$(find-pkg-share very_simple_robot_simulator)/launch/lidar_simulator.xml" />
     <node pkg="very_simple_robot_simulator" name="world_state_gui" exec="world_state_gui.py" output="screen" >
@@ -12,6 +34,8 @@
     <!-- Lab 3:  -->
     <node pkg="robmov_labs"  exec="localization"  name="localization"  />
     <node pkg="robmov_labs" exec="movimiento_lab3"  name="movimiento_lab3" />
+
+    <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share robmov_labs)/config.rviz" />
 
 
 </launch>
