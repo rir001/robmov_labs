@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'robmov_labs'
+package_name = 'proyecto_grupo_2_2024'
 
 setup(
     name=package_name,
@@ -10,12 +10,11 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name, glob('launch/*.xml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='rir',
-    maintainer_email='adrivera1@puc.cl',
+    maintainer='mateodlcc',
+    maintainer_email='mateodlcc@uc.cl',
     description='TODO: Package description',
     license='TODO: License declaration',
     tests_require=['pytest'],
