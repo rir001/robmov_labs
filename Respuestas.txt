@@ -1,0 +1,27 @@
+Respuestas a las preguntas:
+
+* Parte 1:
+    - P1: ¿Qué dimensiones métricas tiene el mapa proporcionado?
+    
+        |-> 
+
+    - P2: ¿Qué significa el campo “origin” del archivo “mapa bodega.yaml”?
+
+        |-> El campo "origin" se refiere a la posición del origen del mapa en el marco de referencia del mundo real en coordenadas (x,y,θ).
+        Esto significa que, en nuestro caso, el origen del mapa está a 1.9 metros a la izquierda y 1.5 metros abajo del origen del sistema de coordenadas global, sin estar rotado.        
+
+        
+    - P3: En el caso particular del simulador, consideraremos que el Lidar se encuentra ubicado justo en el centro del robot.
+    Según esto, ¿Qué valor debería tomar el vector de transfomación a publicar por tf2 ros (x, y, z, yaw, pitch, roll)?
+
+        |->
+
+
+* Parte 2:
+
+
+* Parte 3:
+
+
+* Parte 4:
+

@@ -1,4 +1,5 @@
 from setuptools import find_packages, setup
+from glob import glob
 
 package_name = 'proyecto_grupo_2_2024'
 
@@ -10,6 +11,9 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name, glob('launch/*.xml')),
+        ('share/' + package_name, glob('maps/*')),
+        ('share/' + package_name, glob('Rviz/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
