@@ -1,7 +1,7 @@
 <launch>
 
-    <arg name="initial_x" default="1.0" />
-    <arg name="initial_y" default="1.0" />
+    <arg name="initial_x" default="2.0" />
+    <arg name="initial_y" default="2.0" />
     <arg name="initial_yaw" default="0.0" />
 
     <node pkg="very_simple_robot_simulator" exec="kobuki_simulator.py" name="kobuki_simulator" output="screen" >
@@ -21,9 +21,7 @@
 
     <node pkg="tf2_ros" exec="static_transform_publisher" name="base_link_to_laser" args="--x 0 --y 0 --z 0 --roll 0 --pitch 0 --yaw 0 --frame-id base_link --child-frame-id laser" />
     
-    <node pkg="rviz2" exec="rviz2" name="rviz" output="screen" >
-        <param name="config" value="$(find-pkg-share proyecto_grupo_2_2024)/Test1.rviz" />
-    </node>
+    <node pkg="rviz2" exec="rviz2" name="rviz" output="screen" args="-d $(find-pkg-share proyecto_grupo_2_2024)/Test1.rviz" />
 
     <node pkg="nav2_amcl" exec="amcl" name="amcl" >
         <param name="global_frame_id" value="world_map" />
@@ -35,9 +33,9 @@
         <param name="laser_max_beams" value="181" />
         <param name="min_particles" value="250" />
         <param name="set_initial_pose" value="true" />
-        <param name="initial_pose_x" value="$(var initial_x)" />
-        <param name="initial_pose_y" value="$(var initial_y)" />
-        <param name="initial_pose_a" value="$(var initial_yaw)" />
+        <param name="initial_pose.x" value="$(var initial_x)" />
+        <param name="initial_pose.y" value="$(var initial_y)" />
+        <param name="initial_pose.yaw" value="$(var initial_yaw)" />
     </node>
 
     <include file="$(find-pkg-share nav2_bringup)/launch/navigation_launch.py" >

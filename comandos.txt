@@ -7,3 +7,6 @@ ros2 run slam_toolbox sync_slam_toolbox_node --ros-args -p odom_frame:=odom --ro
 
 - Guardar Slam:
 ros2 run nav2_map_server map_saver_cli -f my_first_slam_map
+
+- Iniciar AMCL:
+ros2 run nav2_util lifecycle_bringup amcl
