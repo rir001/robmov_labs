@@ -3,7 +3,9 @@ Respuestas a las preguntas:
 * Parte 1:
     - P1: ¿Qué dimensiones métricas tiene el mapa proporcionado?
     
-        |-> 
+        |-> Las dimensiones del mapa son 36.35 x 20.4 metros (Ancho x Altura), esto viene dado ya que
+        la resolución es de 0.05 según el archivo .yaml y las dimensiones de la imagen (especificadas en la cabecera del archivo pgm) son
+        727 x 408 (anchura, altura en pixeles).
 
     - P2: ¿Qué significa el campo “origin” del archivo “mapa bodega.yaml”?
 
@@ -14,7 +16,9 @@ Respuestas a las preguntas:
     - P3: En el caso particular del simulador, consideraremos que el Lidar se encuentra ubicado justo en el centro del robot.
     Según esto, ¿Qué valor debería tomar el vector de transfomación a publicar por tf2 ros (x, y, z, yaw, pitch, roll)?
 
-        |->
+        |-> Dado que el Lidar se encuentra ubicado en el centro del robot y no estamos considerando la altura como una variable, podeoms decir que los valores son:
+        x=0, y=0, z=0. Por otra parte, la orientación del Lidar estaría dada por la orientación propia del robot, es decir: roll=0, pitch=0, yaw=0.
+        Finalmente, obtendríamos el vector: (0, 0, 0, 0, 0, 0).
 
 
 * Parte 2:
